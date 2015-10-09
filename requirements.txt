@@ -1,0 +1,10 @@
+libpcap development library
+pcap (using cabal)
+dummy kernal module
+
+Notes:
+http://www.pocketnix.org/posts/Linux%20Networking:%20Dummy%20Interfaces%20and%20Virtual%20Bridges
+http://unix.stackexchange.com/questions/152331/how-can-i-create-a-virtual-ethernet-interface-on-a-machine-without-a-physical-ad
+
+Usable IP addresses
+http://www.arrowmail.co.uk/articles/iprange.aspx
