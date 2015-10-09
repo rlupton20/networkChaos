@@ -1,0 +1,28 @@
+* Dummy Network Interfaces
+** To create a dummy interface:
+
+sudo modprobe dummy
+sudo ip link add rvl0 type dummy
+sudo ifconfig rvl0 up
+
+route add -net 10.0.0.0 netmask 255.255.255.0 dev rvl0
+
+** To take the dummy interface down:
+
+route delete -net 10.0.0.0 netmask 255.255.255.0 dev rvl0
+
+sudo ifconfig rvl0 down
+sudo ip link delete rvl0 type dummy
+sudo rmmod dummy
+* Running list of requirements
+** libpcap development library
+Operating System's package manager
+** pcap
+cabal install pcap
+** dummy kernal module
+Should be preinstalled
+* Notes and resources
+http://www.pocketnix.org/posts/Linux%20Networking:%20Dummy%20Interfaces%20and%20Virtual%20Bridges
+http://unix.stackexchange.com/questions/152331/how-can-i-create-a-virtual-ethernet-interface-on-a-machine-without-a-physical-ad
+** List of useable IP addresses for LAN
+http://www.arrowmail.co.uk/articles/iprange.aspx
