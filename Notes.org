@@ -21,8 +21,12 @@ Operating System's package manager
 cabal install pcap
 ** dummy kernal module
 Should be preinstalled
+** network-house package
+cabal-install network-house
 * Notes and resources
 http://www.pocketnix.org/posts/Linux%20Networking:%20Dummy%20Interfaces%20and%20Virtual%20Bridges
 http://unix.stackexchange.com/questions/152331/how-can-i-create-a-virtual-ethernet-interface-on-a-machine-without-a-physical-ad
+** Parsing packets with the Haskell house library
+http://osdir.com/ml/lang.haskell.libraries/2006-05/msg00076.html
 ** List of useable IP addresses for LAN
 http://www.arrowmail.co.uk/articles/iprange.aspx
