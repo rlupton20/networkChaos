@@ -26,7 +26,7 @@ processIP4 packet = withSocketsDo $ do
       routedPacket = packet { Net.IPv4.dest = newdest }
       toSend = B.pack.outBytes $ doUnparse routedPacket
 
-  putStrLn $ (show destination) ++ " --> " ++ (show newdest)
+  putStrLn $ (show destination) ++ " --> " ++ (show $ Net.IPv4.dest routedPacket)
 
   ad <- getAddrInfo Nothing (Just $ addrToString newdest) Nothing
   let addr = addrAddress.head $ ad

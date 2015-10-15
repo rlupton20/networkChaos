@@ -14,6 +14,9 @@ route delete -net 10.0.0.0 netmask 255.255.255.0 dev rvl0
 sudo ifconfig rvl0 down
 sudo ip link delete rvl0 type dummy
 sudo rmmod dummy
+* Sockets
+** Raw Sockets
+IPPROTO_RAW is protocol number 255.
 * Running list of requirements
 ** libpcap development library
 Operating System's package manager
