@@ -1,3 +1,7 @@
 # Text editor artifacts
 *#
 *~
+
+# ghc Haskell objects
+*.o
+*.hi

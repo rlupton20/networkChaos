@@ -1,6 +1,8 @@
 import System.Environment
 
 import Network.Pcap
+import Network.Socket hiding (send, sendTo, recv, recvFrom)
+import Network.Socket.ByteString
 
 import Net.Packet
 import Net.PacketParsing
@@ -8,6 +10,8 @@ import qualified  Net.Ethernet
 import qualified Net.IPv4
 
 import qualified Data.ByteString as B
+
+import Routing
 
 formatForParsing :: B.ByteString -> InPacket
 formatForParsing p = toInPack $ listArray (0, B.length p - 1) (B.unpack p)
@@ -25,6 +29,14 @@ unparseTest pbs = do
                       pcku = Net.Ethernet.unparse $ fmap doUnparse pck
                   return (outBytes pu == outBytes pcku)
 
+filterAndProcess :: PktHdr -> B.ByteString -> IO ()
+filterAndProcess _ packet = do
+  let peeled = parseIP4 packet
+      ip4Packet = fmap Net.Ethernet.content peeled
+  case ip4Packet of
+    Nothing -> putStrLn "Bad Packet"
+    (Just pack) -> processIP4 pack
+
 main :: IO ()
 main = do
   args <- getArgs
@@ -34,5 +46,5 @@ main = do
   setFilter device "ether proto 0x0800" True 0
 
   putStrLn $ "Listening on " ++ interface
-  loopBS device (-1) (\_ packet -> putStrLn.show $ parseIP4 packet)
+  loopBS device (-1) filterAndProcess
   return ()
