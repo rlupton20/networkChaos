@@ -33,3 +33,8 @@ http://unix.stackexchange.com/questions/152331/how-can-i-create-a-virtual-ethern
 http://osdir.com/ml/lang.haskell.libraries/2006-05/msg00076.html
 ** List of useable IP addresses for LAN
 http://www.arrowmail.co.uk/articles/iprange.aspx
+* Generating SSL (TSL) keys and certificates
+From the command line, the following is a good starting point
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 30
+
+
