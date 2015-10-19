@@ -43,7 +43,7 @@ main = do
   let interface = if null args then "rvl0" else (args!!0)
   
   device <- openLive interface 0xFFFF False 0
-  setFilter device "ether proto 0x0800" True 0
+  setFilter device "ip" True 0
 
   putStrLn $ "Listening on " ++ interface
   loopBS device (-1) filterAndProcess
