@@ -1,4 +1,4 @@
--- Basic TCP server
+-- Basic TCP server - to develop for TLS connection
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import qualified Data.ByteString as B
