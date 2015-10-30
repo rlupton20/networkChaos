@@ -74,5 +74,7 @@ Since on the fly (non-interactive) generation is also desirable, one can do this
 E.g.
 http://crohr.me/journal/2014/generate-self-signed-ssl-certificate-without-prompt-noninteractive-mode.html
 http://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively
+** Random number generator for Cryptography
+SystemRNG is probably enough (looking for an instance of CPRG)
 * Datagram TLS
 DTLS is for unreliable transport protocols. May be useful for tunneling UDP etc.
