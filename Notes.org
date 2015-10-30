@@ -38,3 +38,27 @@ From the command line, the following is a good starting point
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 30
 
 
+* TLS sockets
+To get TLS working: use contextNew backend params randomNumGen
+params : Client params and Server params
+serverParams = ServerParams ...
+https://hackage.haskell.org/package/tls-1.2.2/docs/Network-TLS.html#g:6
+Socket is an instance of HasBackend, so contextNew can be passed a socket.
+ClientParams is an instance of TLSParams, as is ServerParams (missing from documentation, but ghci confirms).
+** ServerParams
+ServerParams = ServerParams {
+serverWantClientCert :: Bool,
+serverCACertificates :: [SignedCertificate],
+serverDHEParams :: Maybe DHParams,
+serverShared :: Shared,
+serverHooks :: ServerHooks,
+serverSupported :: Supported }
+
+Can get defaults by using def from Data.Default.Class
+** ClientParams
+** Reading certificates
+The old Network.TLS.Extra provides:
+fileReadCertificate :: FilePath -> IO X509
+fileReadPrivateKey :: FilePath -> IO PrivateKey
+This is replaced by:
+credentialLoadX509 :: FilePath -> FilePath -> IO (Either String Credential)
