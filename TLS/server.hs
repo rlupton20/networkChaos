@@ -6,11 +6,6 @@ import Data.ByteString.Char8 (pack)
 import Network.Socket.ByteString
 
 import Network.TLS
--- To get TLS working: use contextNew backend params randomNumGen
--- params : Client params and Server params
-{- serverParams = ServerParams ...
-https://hackage.haskell.org/package/tls-1.2.2/docs/Network-TLS.html#g:6
--}
 
 main :: IO ()
 main = withSocketsDo $ do
