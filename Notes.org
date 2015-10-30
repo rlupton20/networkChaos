@@ -62,7 +62,12 @@ fileReadCertificate :: FilePath -> IO X509
 fileReadPrivateKey :: FilePath -> IO PrivateKey
 This is replaced by:
 credentialLoadX509 :: FilePath -> FilePath -> IO (Either String Credential)
-(This presently fails because Data.X509.File has a function readKeyFile which for some reason fails on certain types of key:
-https://github.com/vincenthz/hs-certificate/issues/41)
+Note passphrases make this fail, remove passphrases with
+openssl rsa -in keyIn.pem -out keyNoPassphrase.pem
+or see
+http://serverfault.com/questions/366372/is-it-possible-to-generate-rsa-key-without-pass-phrase
+The option -nodes (No DES) will stop the key being encrypted.
+
+Then credentialLoadX509 "cert.pem" "key.pem" loads the certificate.
 * Datagram TLS
 DTLS is for unreliable transport protocols. May be useful for tunneling UDP etc.
