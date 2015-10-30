@@ -62,3 +62,7 @@ fileReadCertificate :: FilePath -> IO X509
 fileReadPrivateKey :: FilePath -> IO PrivateKey
 This is replaced by:
 credentialLoadX509 :: FilePath -> FilePath -> IO (Either String Credential)
+(This presently fails because Data.X509.File has a function readKeyFile which for some reason fails on certain types of key:
+https://github.com/vincenthz/hs-certificate/issues/41)
+* Datagram TLS
+DTLS is for unreliable transport protocols. May be useful for tunneling UDP etc.
