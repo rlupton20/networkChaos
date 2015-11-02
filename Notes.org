@@ -37,7 +37,10 @@ http://www.arrowmail.co.uk/articles/iprange.aspx
 From the command line, the following is a good starting point
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 30
 
+Clients also expect the hostname and common name to agree (when setting ClientParams). Certificates need to abide by this.
 
+Clients also need to know whether they can trust a certificate or not.
+Add trusted certificates to Shared's sharedCAStoreCertificates can be loaded using readSignedObject (Data.X509.File), and translated to CertificateStore by makeCertificateStore (Data.X509.CertificateStore).
 * TLS sockets
 To get TLS working: use contextNew backend params    --randomNumGen?
 NOTE: A context should be made on a connection with a client, not
