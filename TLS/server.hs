@@ -48,8 +48,8 @@ main = withSocketsDo $ do
   where forever a = a >> forever a
 
 makeServerParams :: (MonadIO m) => m ServerParams
-makeServerParams = do
-  attempted <- liftIO $ credentialLoadX509 "cert.pem" "key.pem"
+makeServerParams = liftIO $ do
+  attempted <- credentialLoadX509 "cert.pem" "key.pem"
   -- Now pattern match credential, certificate chain and private key (ignored)
   let (Right cred@(cc, _)) = attempted
       CertificateChain listOfSignedCerts = cc
