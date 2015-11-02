@@ -39,12 +39,15 @@ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 30
 
 
 * TLS sockets
-To get TLS working: use contextNew backend params randomNumGen
+To get TLS working: use contextNew backend params    --randomNumGen?
+NOTE: A context should be made on a connection with a client, not
+just a listening socket.
 params : Client params and Server params
 serverParams = ServerParams ...
 https://hackage.haskell.org/package/tls-1.2.2/docs/Network-TLS.html#g:6
 Socket is an instance of HasBackend, so contextNew can be passed a socket.
 ClientParams is an instance of TLSParams, as is ServerParams (missing from documentation, but ghci confirms).
+NOTE: contextNew doesn't appear to need a random number generator. Where on earth did I find CPRG?
 ** ServerParams
 ServerParams = ServerParams {
 serverWantClientCert :: Bool,
@@ -76,5 +79,8 @@ http://crohr.me/journal/2014/generate-self-signed-ssl-certificate-without-prompt
 http://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively
 ** Random number generator for Cryptography
 SystemRNG is probably enough (looking for an instance of CPRG)
+Actually, not required for contextNew
+** Sending data
+Using {-# LANGUAGE OverloadedStrings #-} with import Data.String to use ByteStrings with fromString (i.e. abstract string datatype ala Num)
 * Datagram TLS
 DTLS is for unreliable transport protocols. May be useful for tunneling UDP etc.
