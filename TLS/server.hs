@@ -1,7 +1,6 @@
 -- Basic TCP server - to develop for TLS connection
 {-# LANGUAGE OverloadedStrings #-}
 
-
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import qualified Data.ByteString as B
 import Data.String
@@ -28,13 +27,14 @@ main = withSocketsDo $ do
   putStrLn $ show tlsParams
 
   -- This loops forever, dispatching a basic message to anything that
-  -- connectes. One can connect with a web browser for instance.
+  -- connects securely. One can connect with a web browser for instance,
+  -- via https
   forever $ do
     -- Get the next connection, and show the details
     (connection, client) <- accept server
     putStrLn $ "Got connection from " ++ show client
 
-    -- Enable encryption on the connections
+    -- Enable encryption on the connection
     context <- contextNew connection tlsParams
     handshake context
     message <- recvData context
