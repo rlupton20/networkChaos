@@ -41,6 +41,9 @@ Clients also expect the hostname and common name to agree (when setting ClientPa
 
 Clients also need to know whether they can trust a certificate or not.
 Add trusted certificates to Shared's sharedCAStoreCertificates can be loaded using readSignedObject (Data.X509.File), and translated to CertificateStore by makeCertificateStore (Data.X509.CertificateStore).
+* Commuicating certificates
+Could use a SHA hash to pass condensed certificate check to others.
+ClientHooks can be used on receipt of a certificate, to check it against a hash, and add it to a database.
 * TLS sockets
 To get TLS working: use contextNew backend params    --randomNumGen?
 NOTE: A context should be made on a connection with a client, not
