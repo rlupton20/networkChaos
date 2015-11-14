@@ -23,10 +23,10 @@ instance Connection StdIO where
 
 -- Data type representing two plain (TCP) sockets for two
 -- way communication. Are the data structures correct?
+-- IDEA: alter Connection datatype or put checking in instances?
 data DualSockets = DualSockets Socket Socket
 instance Connection DualSockets where
   dispatchTo str (DualSockets _ outSock) = liftIO $ do
-    addr <- getPeerName outSock
     send outSock str
     return ()
   collectFrom (DualSockets inSock _) = liftIO $ do

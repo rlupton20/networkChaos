@@ -1,6 +1,7 @@
 module Routing where
 
 import System.Environment
+import Control.Monad.IO.Class
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
@@ -11,26 +12,14 @@ import qualified  Net.Ethernet
 import qualified Net.IPv4
 
 import qualified Data.ByteString as B
+import Connection
 
 routing :: (Net.IPv4.Addr, Net.IPv4.Addr)
-routing = (Net.IPv4.Addr 10 0 0 10, Net.IPv4.Addr 192 168 0 104)
+routing = (Net.IPv4.Addr 10 0 0 10, Net.IPv4.Addr 127 0 0 1) --192 168 0 104)
 
 addrToString :: Net.IPv4.Addr -> String
 addrToString (Net.IPv4.Addr s1 s2 s3 s4) = init.concat.map (++".") $ map show [s1, s2, s3, s4]
 
-dispatchTo :: B.ByteString -> String -> IO Int
-dispatchTo packet address = do
-  ads <- getAddrInfo Nothing (Just address) Nothing
-  trySendingTo ads
-  where trySendingTo ads = case ads of [] -> return 0
-                                       (ad:adss) -> do
-                                         let sockAddr = addrAddress ad
-                                         sock <- socket AF_INET Raw 255
-                                         connect sock sockAddr
-                                         sent <- send sock packet
-                                         close sock
-                                         if sent == 0 then trySendingTo adss else return sent
-                                                     
 processIP4 :: Net.IPv4.Packet InPacket -> IO ()
 processIP4 packet = withSocketsDo $ do
   
@@ -41,8 +30,23 @@ processIP4 packet = withSocketsDo $ do
 
   putStrLn $ (show destination) ++ " --> " ++ (show $ Net.IPv4.dest routedPacket)
 
-  sent <- toSend `dispatchTo` (addrToString newdest)
-  
-  putStrLn $ show sent ++ " bytes sent"
+  --sent <- toSend `dispatchTo` (addrToString newdest)
+
+  comms <- synchroSock $ addrToString newdest
+  toSend `dispatchTo` comms
+  putStrLn $ "Dispatched."
 
   return ()
+
+-- This creates a normal one way socket Connection to the
+-- provided address.
+synchroSock :: (MonadIO m) => String -> m DualSockets
+synchroSock addr = liftIO $ do
+  (ad:_) <- getAddrInfo Nothing (Just addr) Nothing
+  let sockAddr = addrAddress ad
+  sock <- socket AF_INET Raw 255
+  connect sock sockAddr
+  putStrLn $ "Connected on " ++ show sockAddr
+  return $ (DualSockets sock sock)
+  
+  
