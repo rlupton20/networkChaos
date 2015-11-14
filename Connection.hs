@@ -20,3 +20,14 @@ data StdIO = StdIO
 instance Connection StdIO where
   dispatchTo str _ = liftIO . B.putStrLn $ str
   collectFrom _ = liftIO $ B.getLine
+
+-- Data type representing two plain (TCP) sockets for two
+-- way communication. Are the data structures correct?
+data DualSockets = DualSockets Socket Socket
+instance Connection DualSockets where
+  dispatchTo str (DualSockets _ outSock) = liftIO $ do
+    addr <- getPeerName outSock
+    send outSock str
+    return ()
+  collectFrom (DualSockets inSock _) = liftIO $ do
+    fmap fst $ recvFrom inSock 4096
