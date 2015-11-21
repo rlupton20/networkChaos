@@ -90,3 +90,10 @@ Actually, not required for contextNew
 Using {-# LANGUAGE OverloadedStrings #-} with import Data.String to use ByteStrings with fromString (i.e. abstract string datatype ala Num)
 * Datagram TLS
 DTLS is for unreliable transport protocols. May be useful for tunneling UDP etc.
+* Sockets
+aNY_PORT can be passed as a port number if a dynamically allocated port is required. Since I need many connections this is useful. There are functions available to discover this number also.
+Since I want asynchronous communication, each correspondence will have
+two sockets. It makes sense for these to be bound to a port to
+simplify port mapping etc.
+* UDP sockets
+Need to manage these for tunnelling!
