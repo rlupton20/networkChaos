@@ -95,5 +95,6 @@ aNY_PORT can be passed as a port number if a dynamically allocated port is requi
 Since I want asynchronous communication, each correspondence will have
 two sockets. It makes sense for these to be bound to a port to
 simplify port mapping etc.
+Also iNADDR_ANY for receiving from any interface (handy, since typically IP isn't static).
 * UDP sockets
 Need to manage these for tunnelling!
