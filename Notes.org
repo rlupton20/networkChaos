@@ -98,3 +98,7 @@ simplify port mapping etc.
 Also iNADDR_ANY for receiving from any interface (handy, since typically IP isn't static).
 * UDP sockets
 Need to manage these for tunnelling!
+* UPnP (getting a peer-to-peer workable connection)
+http://www.upnp-hacks.org/igd.html
+* STUN protocol
+Probably the way needed to get a peer-to-peer system up and running.
