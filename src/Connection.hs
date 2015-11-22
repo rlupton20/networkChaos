@@ -1,5 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Connection where
+module Connection
+( Connection
+, receive
+, Connection.send 
+, StdIO(StdIO)
+, makeUDPPair
+, closeUDPPair ) where
 
 import qualified Data.ByteString.Char8 as B
 import Data.String
