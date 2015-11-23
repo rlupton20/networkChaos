@@ -1,13 +1,11 @@
 import Control.Concurrent
 
 import Collector.PacketCapture
-import Routing
+import Routing.Routing
 
 main :: IO ()
 main = do
-  putStrLn "Main thread..."
-
-  routeChan <- makeRouter
+  (routeChan, _) <- makeRouter
   "wlp3s0" `directTo` (\bs -> bs `routeTo` routeChan)
   loop
   where
