@@ -19,8 +19,8 @@ makeRouter = do
 
   return (buf, table)
 
-routeTo :: B.ByteString -> (TQueue B.ByteString) -> IO ()
-routeTo bs bsq = atomically $ writeTQueue bsq bs
+routeTo :: a -> (TQueue a) -> IO ()
+routeTo x xq = atomically $ writeTQueue xq x
   
 routeOn :: (TQueue B.ByteString) -> RoutingTable -> IO ()
 routeOn bsq _ = loop
