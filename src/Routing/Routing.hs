@@ -31,8 +31,23 @@ routeWith bsq rt = loop
            let mppck = parseIP4 bs
            case mppck of
              Just ppck -> do
-                          let dest = getDest ppck
-                          (newsrc, newdest) <- dest `getDirectionWith` rt
-                          putStrLn $ (show dest) ++ " --> "++ (show $ fmap fst newdest)
+               redir <- lookup ppck
+               case redir of
+                 Just ((newsrc, newdest), rchan) -> do
+                   let nbs =  ppck `readdressWith` (newsrc, newdest)
+                   atomically $ writeTQueue rchan nbs
+                   -- Check this works
+                   out <- atomically $ readTQueue rchan
+                   putStrLn $ show out
+                 Nothing -> return ()
              Nothing -> return ()
            loop
+
+    lookup ppck = do
+      let dest = getDest ppck
+      (newsrc, redirect) <- dest `getDirectionWith` rt
+      case redirect of
+        (Just (newdest, routechan)) -> return $ Just ((newsrc, newdest), routechan)
+        Nothing -> return Nothing
+
+    readdressWith ppck (newsrc, newdest) = toBytes . (`setSource` newsrc) . (`setDest` newdest) $ ppck
