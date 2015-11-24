@@ -15,7 +15,7 @@ makeRouter = do
   buf <- newTQueueIO
   table <- newRoutingTable
 
-  tid <- forkIO $ routeOn buf table
+  tid <- forkIO $ buf `routeWith` table
   putStrLn $ "New router on " ++ show tid
 
   return (buf, table)
@@ -23,8 +23,8 @@ makeRouter = do
 routeTo :: a -> (TQueue a) -> IO ()
 routeTo x xq = atomically $ writeTQueue xq x
   
-routeOn :: (TQueue B.ByteString) -> RoutingTable -> IO ()
-routeOn bsq _ = loop
+routeWith :: (TQueue B.ByteString) -> RoutingTable -> IO ()
+routeWith bsq _ = loop
   where
     loop = do
            bs <- atomically $ readTQueue bsq
