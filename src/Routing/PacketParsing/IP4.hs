@@ -1,11 +1,18 @@
 {-# LANGUAGE BangPatterns #-}
 module Routing.PacketParsing.IP4
-( parseIP4, getSource, setSource, getDest, setDest, addr )
+( parseIP4
+, getSource
+, setSource
+, getDest
+, setDest
+, addr
+, toBytes )
 where
 
 import Routing.PacketParsing.Parsing
 
 import qualified Data.ByteString as B
+import Net.Packet
 import Net.PacketParsing
 import Net.IPv4
 
@@ -27,3 +34,6 @@ setDest pck ad = let !rpck = pck { dest = ad } in rpck
 -- Utility function for reading strings into Addr
 addr :: String -> Addr
 addr = read
+
+toBytes :: Net.IPv4.Packet InPacket -> B.ByteString
+toBytes pck = let !bs = (B.pack . outBytes $ doUnparse pck) in bs
