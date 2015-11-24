@@ -1,4 +1,4 @@
-module PacketParsing.Ether
+module Routing.PacketParsing.Ether
 ( stripEther
 , makeEtherStripper ) where
 

@@ -2,7 +2,7 @@ import Control.Concurrent
 
 import Collector.PacketCapture
 import Routing.Routing
-import PacketParsing.Ether
+import Routing.PacketParsing.Ether
 
 main :: IO ()
 main = do
