@@ -36,9 +36,6 @@ routeWith bsq rt = loop
                  Just ((newsrc, newdest), rchan) -> do
                    let nbs =  ppck `readdressWith` (newsrc, newdest)
                    atomically $ writeTQueue rchan nbs
-                   -- Check this works
-                   out <- atomically $ readTQueue rchan
-                   putStrLn $ show out
                  Nothing -> return ()
              Nothing -> return ()
            loop
