@@ -3,6 +3,7 @@ module Routing.Routing
 , routeTo ) where
 
 import Routing.RoutingTable
+import Routing.PacketParsing.IP4
 
 import qualified Data.ByteString as B
 import Control.Concurrent
@@ -27,5 +28,5 @@ routeOn bsq _ = loop
   where
     loop = do
            bs <- atomically $ readTQueue bsq
-           putStrLn $ show bs
+           putStrLn.show $ parseIP4 bs
            loop
