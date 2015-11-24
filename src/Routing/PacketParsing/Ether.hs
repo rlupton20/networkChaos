@@ -14,6 +14,8 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TQueue
 
+import Routing.PacketParsing.Parsing
+
 -- The ethernet header is 14 bytes long so just drop it to get contents
 -- WARNING: Different header types may cause problems, so if this
 -- is kept later, it may need modifying. One advantage is its content
@@ -39,13 +41,9 @@ makeEtherStripper outfeed = do
       let !spck = stripEther pck
       outfeed spck
       loop infeed
-  
-restruct :: B.ByteString -> InPacket
-restruct pk = toInPack $ listArray (0, B.length pk - 1) (B.unpack pk)
 
 -- This function (tries to) parse an ethernet packet, and
 -- returns an internal IP packet if there is one.
 -- Question: could this miss some packets? e.g. if not IP?
 tryRemoveEther :: B.ByteString -> Maybe (Net.IPv4.Packet InPacket)
 tryRemoveEther = fmap (Net.Ethernet.content) . doParse . restruct
-
