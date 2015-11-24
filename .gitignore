@@ -5,3 +5,6 @@
 # ghc Haskell objects
 *.o
 *.hi
+
+# Compiled file
+/src/main
