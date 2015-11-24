@@ -24,9 +24,15 @@ routeTo :: a -> (TQueue a) -> IO ()
 routeTo x xq = atomically $ writeTQueue xq x
   
 routeWith :: (TQueue B.ByteString) -> RoutingTable -> IO ()
-routeWith bsq _ = loop
+routeWith bsq rt = loop
   where
     loop = do
            bs <- atomically $ readTQueue bsq
-           putStrLn.show $ parseIP4 bs
+           let mppck = parseIP4 bs
+           case mppck of
+             Just ppck -> do
+                          let dest = getDest ppck
+                          (newsrc, newdest) <- dest `getDirectionWith` rt
+                          putStrLn $ (show dest) ++ " --> "++ (show $ fmap fst newdest)
+             Nothing -> return ()
            loop
