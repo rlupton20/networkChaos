@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module Routing.Routing
 ( makeRouter
 , routeTo ) where
@@ -43,8 +44,6 @@ routeWith bsq rt = loop
     lookup ppck = do
       let dest = getDest ppck
       (newsrc, redirect) <- dest `getDirectionWith` rt
-      case redirect of
-        (Just (newdest, routechan)) -> return $ Just ((newsrc, newdest), routechan)
-        Nothing -> return Nothing
+      return $ redirect >>= (\(newdest, routechan) -> Just ((newsrc, newdest), routechan) )
 
     readdressWith ppck (newsrc, newdest) = toBytes . (`setSource` newsrc) . (`setDest` newdest) $ ppck
