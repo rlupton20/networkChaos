@@ -16,13 +16,13 @@ main :: IO ()
 main = do
   (routeChan, rt) <- makeRouter
   createRoutingTable rt
+  
   etherStripper <- makeEtherStripper $ \bs -> bs `routeTo` routeChan
   "wlp3s0" `directTo` (\bs -> bs `routeTo` etherStripper)
-  loop
-  where
-    loop = do
-      threadDelay 1000
-      loop
+  
+  -- Enter a character to exit
+  exit <- getLine
+  return ()
 
 -- Test function, building a basic routing table
 createRoutingTable :: RoutingTable -> IO ()
