@@ -1,6 +1,7 @@
 module Collector.PacketCapture
 ( directTo ) where
 
+import Control.Concurrent
 import Network.Pcap
 import qualified Data.ByteString as B
 
@@ -10,5 +11,5 @@ directTo iface rc = do
   setFilter device "ip" True 0
 
   putStrLn $ "Listening on " ++ iface
-  loopBS device (-1) (\_ bs -> rc bs)
+  forkIO $ loopBS device (-1) (\_ bs -> rc bs) >> return ()
   return ()

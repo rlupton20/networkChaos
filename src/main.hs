@@ -21,6 +21,7 @@ main = do
   loop
   where
     loop = do
+      threadDelay 1000
       loop
 
 -- Test function, building a basic routing table
