@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Relay.Interface
-( makeUDPPair ) where
+( relayPair ) where
 
 import Relay.Connection
 
@@ -14,6 +14,14 @@ import Data.String
 -- hopefully later they will be replaced by encrypted sockets
 data UDPPair = UDPPair (Socket, SockAddr) (Socket, SockAddr) (SockAddr, SockAddr) deriving (Show)
 
+relayPair :: (String, String) -> (String, String) -> IO UDPPair
+relayPair (to, toPort) (from, fromPort) = do
+  let tp = fromIntegral (read toPort :: Int)
+      fp = fromIntegral (read fromPort :: Int)
+  toAdd <- resolveAddr to tp
+  fromAdd <- resolveAddr from fp
+  makeUDPPair toAdd fromAdd
+  
 makeUDPPair :: SockAddr -> SockAddr -> IO UDPPair
 makeUDPPair to from = do
   inSock <- socket AF_INET Datagram defaultProtocol
@@ -28,9 +36,6 @@ makeUDPPair to from = do
   outAddr <- getSocketName outSock
   putStrLn $ "In on " ++ show inAddr ++ "; Out on " ++ show outAddr
 
-  -- The final tuple is at the moment just a placeholder;
-  -- it should eventually contain the corresponding addresses
-  -- being sent to and received from
   return $ UDPPair (inSock, inAddr) (outSock, outAddr) (to, from)
 
 instance Connection UDPPair where
