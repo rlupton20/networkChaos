@@ -4,11 +4,30 @@ module Relay.Relay
 import Relay.Connection
   
 import Control.Concurrent
+import Control.Concurrent.STM
 import Control.Concurrent.STM.TQueue
+import Control.Concurrent.Async
 import qualified Data.ByteString as B
 
 makeRelay :: (Connection a) =>  a -> TQueue B.ByteString -> IO (TQueue B.ByteString)
-makeRelay con outstream = do
-  instream <- newTQueueIO
-  return instream
+makeRelay con inbound = do
+  outbound <- newTQueueIO
+  race_ (outbound `outOn` con) (inbound `inFrom` con)
+  return outbound
 
+outOn :: (Connection a) => TQueue B.ByteString -> a -> IO ()
+outOn q conn = loop
+  where
+    loop = do
+      bs <- atomically $ readTQueue q
+      bs `sendOn` conn
+      loop
+
+inFrom :: (Connection a) => TQueue B.ByteString -> a -> IO ()
+inFrom q conn = loop
+  where
+    loop = do
+      bs <- receiveOn conn
+      atomically $ writeTQueue q bs
+      loop
+                    
