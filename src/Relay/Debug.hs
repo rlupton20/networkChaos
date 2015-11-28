@@ -5,6 +5,8 @@ module Relay.Debug
 
 import Relay.Connection
 
+import Control.Concurrent
+
 import qualified Data.ByteString.Char8 as B
 
 -- StdIO is a debugging connection, which simply makes use of the
@@ -21,7 +23,7 @@ data OutOnly = OO (B.ByteString -> IO ())
 instance Connection OutOnly where
   receiveOn _ = loop  -- Never return anything
     where
-      loop = do if 1 == 0 then loop else loop
+      loop = threadDelay 1000000 >> loop
   sendOn str (OO action) = action str
   closeConn _ = return ()
   
