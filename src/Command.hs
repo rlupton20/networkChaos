@@ -35,8 +35,8 @@ newUDPconn :: RoutingTable -> IO (TQueue B.ByteString, UDPPair, Addr, Addr)
 newUDPconn rt = do
   (out:op:inb:ip:vadd:_) <- sequence $ map prompt ["Outbound","Port","Inbound","Port","Register at"]
   inj <- getInjectionQueue rt
-  let vad = read vadd :: Addr
-  let outad = read out :: Addr
+  let vad = stringToAddr vadd
+      outad = stringToAddr out
   udpp <- relayPair (out,op) (inb,ip)
   outstream <- makeRelay udpp inj
   return $ (outstream, udpp, vad, outad)
@@ -44,4 +44,6 @@ newUDPconn rt = do
     prompt pr = do
       putStrLn $ pr ++":"
       getLine
-  
+
+    stringToAddr :: String -> Addr
+    stringToAddr = read
