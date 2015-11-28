@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Relay.Interface
 ( makeUDPPair ) where
 
@@ -7,12 +8,14 @@ import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 import qualified Data.ByteString.Char8 as B
 
+import Data.String
+
 -- UDPPair is a standard pair of UDP sockets for sending and receiving;
 -- hopefully later they will be replaced by encrypted sockets
 data UDPPair = UDPPair (Socket, SockAddr) (Socket, SockAddr) (SockAddr, SockAddr) deriving (Show)
 
-makeUDPPair :: SockAddr -> IO UDPPair
-makeUDPPair _ = do
+makeUDPPair :: SockAddr -> SockAddr -> IO UDPPair
+makeUDPPair to from = do
   inSock <- socket AF_INET Datagram defaultProtocol
   outSock <- socket AF_INET Datagram defaultProtocol
 
@@ -28,24 +31,21 @@ makeUDPPair _ = do
   -- The final tuple is at the moment just a placeholder;
   -- it should eventually contain the corresponding addresses
   -- being sent to and received from
-  return $ UDPPair (inSock, inAddr) (outSock, outAddr) (outAddr, inAddr)
-  
-closeUDPPair :: UDPPair -> IO ()
-closeUDPPair (UDPPair (inSock,_) (outSock,_) _) = do
-  close inSock
-  close outSock
-  return ()
+  return $ UDPPair (inSock, inAddr) (outSock, outAddr) (to, from)
 
 instance Connection UDPPair where
-  receiveOn (UDPPair (inSock, _) _ (corr,_)) = do
+  receiveOn (UDPPair (inSock, _) _ (_,corr)) = do
     (message, recp) <- recvFrom inSock 8192
-    --if recp == corr then return message else putStrLn ("Bad client" ++ show recp)>> (return $ fromString "")
+    if recp == corr then return message else putStrLn ("Bad client" ++ show recp)>> (return $ fromString "")
     return message
-  sendOn str (UDPPair _ (outSock, _) (_,corr)) = do
+  sendOn str (UDPPair _ (outSock, _) (corr,_)) = do
     sent <- sendTo outSock str corr
-    --putStrLn $ show sent ++ " bytes sent"
+    putStrLn $ show sent ++ " bytes sent"
     return ()
-  closeConn = closeUDPPair
+  closeConn (UDPPair (inSock,_) (outSock,_) _) = do
+    close inSock
+    close outSock
+    return ()
 
 -- Utility function for resolving addresses
 resolveAddr :: String -> PortNumber -> IO SockAddr
