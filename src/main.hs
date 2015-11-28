@@ -4,6 +4,7 @@ import Collector.PacketCapture
 import Routing.Routing
 import Routing.RoutingTable
 import Routing.PacketParsing.Ether
+import Command
 
 -- Only needed when setting up router
 import Routing.PacketParsing.IP4 (addr, parseIP4)
@@ -20,8 +21,8 @@ main = do
   etherStripper <- makeEtherStripper $ \bs -> bs `routeTo` routeChan
   "wlp3s0" `directTo` (\bs -> bs `routeTo` etherStripper)
   
-  -- Enter a character to exit
-  exit <- getLine
+  -- Start a command line
+  commandLine rt
   return ()
 
 -- Test function, building a basic routing table
