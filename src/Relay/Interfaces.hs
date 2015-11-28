@@ -1,29 +1,21 @@
-{-# LANGUAGE OverloadedStrings #-}
-module Connection
-( Connection
-, receive
-, Connection.send 
-, StdIO(StdIO)
-, makeUDPPair
-, closeUDPPair ) where
+module Relay.Interfaces
+( StdIO(StdIO)
+, makeUDPPair ) where
 
-import qualified Data.ByteString.Char8 as B
-import Data.String
+import Relay.Connection
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
-
-class Connection a where
-  receive :: a -> IO B.ByteString
-  send :: a -> B.ByteString -> IO ()
+import qualified Data.ByteString.Char8 as B
 
 -- StdIO is a debugging connection, which simply makes use of the
 -- standard input and output
 data StdIO = StdIO deriving (Show)
 
 instance Connection StdIO where
-  receive a = B.getLine
-  send a str = B.putStrLn $ str
+  receiveOn a = B.getLine
+  sendOn str a = B.putStrLn $ str
+  closeConn _ = return ()
 
 -- UDPPair is a standard pair of UDP sockets for sending and receiving;
 -- hopefully later they will be replaced by encrypted sockets
@@ -55,14 +47,15 @@ closeUDPPair (UDPPair (inSock,_) (outSock,_) _) = do
   return ()
 
 instance Connection UDPPair where
-  receive (UDPPair (inSock, _) _ (corr,_)) = do
+  receiveOn (UDPPair (inSock, _) _ (corr,_)) = do
     (message, recp) <- recvFrom inSock 8192
     --if recp == corr then return message else putStrLn ("Bad client" ++ show recp)>> (return $ fromString "")
     return message
-  send (UDPPair _ (outSock, _) (_,corr)) str = do
+  sendOn str (UDPPair _ (outSock, _) (_,corr)) = do
     sent <- sendTo outSock str corr
     --putStrLn $ show sent ++ " bytes sent"
     return ()
+  closeConn = closeUDPPair
 
 -- Utility function for resolving addresses
 resolveAddr :: String -> PortNumber -> IO SockAddr
