@@ -34,8 +34,8 @@ routeWith bsq rt = loop
              Just ppck -> do
                redir <- lookup ppck
                case redir of
-                 Just ((newsrc, newdest), rchan) -> do
-                   let nbs =  ppck `readdressWith` (newsrc, newdest)
+                 Just (newsrc, rchan) -> do
+                   let nbs =  toBytes $ ppck `setSource` newsrc
                    atomically $ writeTQueue rchan nbs
                  Nothing -> return ()
              Nothing -> return ()
@@ -44,6 +44,4 @@ routeWith bsq rt = loop
     lookup ppck = do
       let dest = getDest ppck
       (newsrc, redirect) <- dest `getDirectionWith` rt
-      return $ redirect >>= (\(newdest, routechan) -> Just ((newsrc, newdest), routechan) )
-
-    readdressWith ppck (newsrc, newdest) = toBytes . (`setSource` newsrc) . (`setDest` newdest) $ ppck
+      return $ redirect >>= (\(_, routechan) -> Just (newsrc, routechan) )
