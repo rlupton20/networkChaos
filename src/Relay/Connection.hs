@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Relay.Connection
 ( Connection
 , receiveOn
@@ -6,7 +5,6 @@ module Relay.Connection
 , closeConn ) where
 
 import qualified Data.ByteString as B
-import Data.String
 
 class Connection a where
   receiveOn :: a -> IO B.ByteString

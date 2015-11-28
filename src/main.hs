@@ -7,7 +7,7 @@ import Routing.RoutingTable
 import Routing.PacketParsing.Ether
 
 import Relay.Relay
-import Relay.Interfaces
+import Relay.Debug
 
 import Command
 
@@ -35,7 +35,7 @@ createRoutingTable :: RoutingTable -> IO ()
 createRoutingTable rt = do
   rt `setLocal` (addr "192.168.1.100")
   rt `setVirtual` (addr "10.0.0.1")
-  q <- makeQueueReader $ (\bs -> putStrLn.show $ parseIP4 bs)
-  outq <- makeRelay StdIO q
+  q <- makeQueueReader $ (\bs -> putStrLn.show $ bs)
+  outq <- makeRelay (outRelayWith (\bs -> putStrLn.show $ parseIP4 bs)) q
   newRoute rt (addr "10.0.0.0") (addr "10.0.0.10", outq)
   return ()

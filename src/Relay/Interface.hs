@@ -1,21 +1,11 @@
-module Relay.Interfaces
-( StdIO(StdIO)
-, makeUDPPair ) where
+module Relay.Interface
+( makeUDPPair ) where
 
 import Relay.Connection
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 import qualified Data.ByteString.Char8 as B
-
--- StdIO is a debugging connection, which simply makes use of the
--- standard input and output
-data StdIO = StdIO deriving (Show)
-
-instance Connection StdIO where
-  receiveOn a = B.getLine
-  sendOn str a = B.putStrLn $ str
-  closeConn _ = return ()
 
 -- UDPPair is a standard pair of UDP sockets for sending and receiving;
 -- hopefully later they will be replaced by encrypted sockets
