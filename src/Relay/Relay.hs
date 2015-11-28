@@ -12,7 +12,7 @@ import qualified Data.ByteString as B
 makeRelay :: (Connection a) =>  a -> TQueue B.ByteString -> IO (TQueue B.ByteString)
 makeRelay con inbound = do
   outbound <- newTQueueIO
-  race_ (outbound `outOn` con) (inbound `inFrom` con)
+  forkFinally (race_ (outbound `outOn` con) (inbound `inFrom` con)) (\_ -> closeConn con)
   return outbound
 
 outOn :: (Connection a) => TQueue B.ByteString -> a -> IO ()
