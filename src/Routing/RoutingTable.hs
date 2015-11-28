@@ -6,7 +6,8 @@ module Routing.RoutingTable
 , setVirtual
 , newRoute
 , delRouteFor
-, getDirectionWith ) where
+, getDirectionWith
+, getInjectionQueue ) where
 
 import Routing.PacketParsing.IP4
 
@@ -21,14 +22,17 @@ import qualified Data.ByteString as B
 
 data RoutingTable = RT { local :: (TVar Addr)
                        , virtual :: (TVar Addr)
+                       , inject :: TVar (TQueue B.ByteString)
                        , table :: TVar (M.Map Addr (Addr, TQueue B.ByteString))}
 
 newRoutingTable :: IO RoutingTable
 newRoutingTable = do
   l <- newTVarIO $ addr "0.0.0.0"
   v <- newTVarIO $ addr "0.0.0.0"
+  injq <- newTQueueIO
+  inj <- newTVarIO injq
   tab <- newTVarIO $ M.empty
-  let rT = (RT l v tab)
+  let rT = (RT l v inj tab)
   return rT
   
 setLocal :: RoutingTable -> Addr -> IO ()
@@ -52,3 +56,6 @@ getDirectionWithSTM dest RT{..} = do
 
 getDirectionWith :: Addr -> RoutingTable -> IO (Addr, Maybe (Addr, TQueue B.ByteString))
 getDirectionWith ad rt = atomically $ getDirectionWithSTM ad rt
+
+getInjectionQueue :: RoutingTable -> IO (TQueue B.ByteString)
+getInjectionQueue RT{..} = atomically $ readTVar inject

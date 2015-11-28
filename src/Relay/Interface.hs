@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Relay.Interface
-( relayPair ) where
+( UDPPair
+, relayPair
+, outAddr ) where
 
 import Relay.Connection
 
@@ -51,6 +53,9 @@ instance Connection UDPPair where
     close inSock
     close outSock
     return ()
+
+outAddr :: UDPPair -> String
+outAddr (UDPPair _ (_,ad) _) = show ad
 
 -- Utility function for resolving addresses
 resolveAddr :: String -> PortNumber -> IO SockAddr
