@@ -10,7 +10,9 @@ import qualified Data.ByteString as B
 
 makeQueueReader :: TQueue a -> (a -> IO b) -> IO ThreadId
 makeQueueReader tq action = do
-  forkIO $ loop
+  tid <- forkIO $ loop
+  putStrLn $ "Queue reader on " ++ show tid
+  return tid
     where loop = do
             v <- atomically $ readTQueue tq
             action v

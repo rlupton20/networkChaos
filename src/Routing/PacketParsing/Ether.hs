@@ -33,7 +33,7 @@ makeEtherStripper :: (B.ByteString -> IO ()) -> IO (TQueue B.ByteString)
 makeEtherStripper outfeed = do
   infeed <- newTQueueIO
   tid <- forkIO $ loop infeed
-  putStrLn $ "Ethernet header stripper started: " ++ show tid
+  putStrLn $ "Ethernet header stripper started on " ++ show tid
   return infeed
   where
     loop infeed = do
