@@ -10,6 +10,7 @@ import Relay.Relay
 import Relay.Debug
 
 import Command
+import Environments
 
 -- Only needed when setting up router
 import Routing.PacketParsing.IP4 (addr, parseIP4)
@@ -25,9 +26,10 @@ main = do
   
   etherStripper <- makeEtherStripper $ \bs -> bs `routeTo` routeChan
   "wlp3s0" `directTo` (\bs -> bs `routeTo` etherStripper)
-  
+
   -- Start a command line
-  commandLine rt
+  let env = Environment rt
+  commandLine `manageWith` env
   return ()
 
 -- Test function, building a basic routing table
