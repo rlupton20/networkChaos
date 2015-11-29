@@ -24,12 +24,12 @@ process rt cmd
                       newConn <- try (newUDPconn rt) :: IO (Either SomeException (TQueue B.ByteString, UDPPair, Addr, Addr))
                       case newConn of
                         Left err -> putStrLn "New connection failed:" >> (putStrLn $ show err)
-                        Right (q, udpp, !vad, !outad) -> newRoute rt vad (outad, q) >> putStrLn "New route added."
+                        Right (q, _, !vad, !outad) -> newRoute rt vad (outad, q) >> putStrLn "New route added."
   | otherwise = putStrLn $ "Invalid command: " ++ cmd
 
 newUDPconn :: RoutingTable -> IO (TQueue B.ByteString, UDPPair, Addr, Addr)
 newUDPconn rt = do
-  (out:op:inb:ip:vadd:_) <- sequence $ map prompt ["Outbound","Port","Inbound","Port","Register at"]
+  (out:op:inb:ip:vadd:_) <- sequence $ fmap prompt ["Outbound","Port","Inbound","Port","Register at"]
   inj <- getInjectionQueue rt
   let vad = stringToAddr vadd
       outad = stringToAddr out
