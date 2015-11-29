@@ -2,6 +2,8 @@
 module Command
 ( commandLine ) where
 
+import Environments
+  
 import Routing.RoutingTable
 import Relay.Relay
 import Relay.Interface
