@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Relay.Interface
 ( UDPPair
+, PrePair
+, newUDPSockets
 , relayPair
 , outAddr ) where
 
@@ -16,16 +18,18 @@ import Data.String
 -- hopefully later they will be replaced by encrypted sockets
 data UDPPair = UDPPair (Socket, SockAddr) (Socket, SockAddr) (SockAddr, SockAddr) deriving (Show)
 
-relayPair :: (String, String) -> (String, String) -> IO UDPPair
-relayPair (to, toPort) (from, fromPort) = do
+type PrePair = ((Socket, SockAddr), (Socket,SockAddr))
+
+relayPair :: PrePair -> (String, String) -> (String, String) -> IO UDPPair
+relayPair ((ins,ina),(outs,outa)) (to, toPort) (from, fromPort) = do
   let tp = fromIntegral (read toPort :: Int)
       fp = fromIntegral (read fromPort :: Int)
   toAdd <- resolveAddr to tp
   fromAdd <- resolveAddr from fp
-  makeUDPPair toAdd fromAdd
-  
-makeUDPPair :: SockAddr -> SockAddr -> IO UDPPair
-makeUDPPair to from = do
+  return (UDPPair (ins,ina) (outs,outa) (toAdd,fromAdd))
+
+newUDPSockets :: IO PrePair
+newUDPSockets = do
   inSock <- socket AF_INET Datagram defaultProtocol
   outSock <- socket AF_INET Datagram defaultProtocol
 
@@ -34,11 +38,11 @@ makeUDPPair to from = do
   bind inSock inAddr
   bind outSock outAddr
 
-  inAddr <- getSocketName inSock
-  outAddr <- getSocketName outSock
-  putStrLn $ "In on " ++ show inAddr ++ "; Out on " ++ show outAddr
-
-  return $ UDPPair (inSock, inAddr) (outSock, outAddr) (to, from)
+  inAddrS <- getSocketName inSock
+  outAddrS <- getSocketName outSock
+  putStrLn $ "In on " ++ show inAddrS ++ "; Out on " ++ show outAddrS
+  
+  return ((inSock,inAddrS), (outSock,outAddrS))
 
 instance Connection UDPPair where
   receiveOn (UDPPair (inSock, _) _ (_,corr)) = do
