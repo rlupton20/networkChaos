@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Relay.Interface
-( UDPPair
-, PrePair
-, newUDPSockets
-, relayPair
-, outAddr ) where
+( UDPConn
+, UDPSock
+, newUDPSocket
+, sockToConn
+, addr ) where
 
 import Relay.Connection
 
@@ -16,50 +16,43 @@ import Data.String
 
 -- UDPPair is a standard pair of UDP sockets for sending and receiving;
 -- hopefully later they will be replaced by encrypted sockets
-data UDPPair = UDPPair (Socket, SockAddr) (Socket, SockAddr) (SockAddr, SockAddr) deriving (Show)
+data UDPConn = UDPConn (Socket, SockAddr) SockAddr deriving (Show)
 
-type PrePair = ((Socket, SockAddr), (Socket,SockAddr))
-
-relayPair :: PrePair -> (String, String) -> (String, String) -> IO UDPPair
-relayPair ((ins,ina),(outs,outa)) (to, toPort) (from, fromPort) = do
-  let tp = fromIntegral (read toPort :: Int)
-      fp = fromIntegral (read fromPort :: Int)
-  toAdd <- resolveAddr to tp
-  fromAdd <- resolveAddr from fp
-  return (UDPPair (ins,ina) (outs,outa) (toAdd,fromAdd))
-
-newUDPSockets :: IO PrePair
-newUDPSockets = do
-  inSock <- socket AF_INET Datagram defaultProtocol
-  outSock <- socket AF_INET Datagram defaultProtocol
-
-  inAddr <- resolveAddr (show $ iNADDR_ANY) aNY_PORT
-  outAddr <- resolveAddr (show $ iNADDR_ANY) aNY_PORT
-  bind inSock inAddr
-  bind outSock outAddr
-
-  inAddrS <- getSocketName inSock
-  outAddrS <- getSocketName outSock
-  putStrLn $ "In on " ++ show inAddrS ++ "; Out on " ++ show outAddrS
-  
-  return ((inSock,inAddrS), (outSock,outAddrS))
-
-instance Connection UDPPair where
-  receiveOn (UDPPair (inSock, _) _ (_,corr)) = do
-    (message, recp) <- recvFrom inSock 8192
+instance Connection UDPConn where
+  receiveOn (UDPConn (sock, _) corr) = do
+    (message, recp) <- recvFrom sock 8192
     if recp == corr then return message else putStrLn ("Bad client" ++ show recp)>> (return $ fromString "")
     return message
-  sendOn str (UDPPair _ (outSock, _) (corr,_)) = do
-    sent <- sendTo outSock str corr
+  sendOn str (UDPConn (sock, _) corr) = do
+    sent <- sendTo sock str corr
     putStrLn $ show sent ++ " bytes sent"
     return ()
-  closeConn (UDPPair (inSock,_) (outSock,_) _) = do
-    close inSock
-    close outSock
+  closeConn (UDPConn (sock,_) _) = do
+    close sock
     return ()
 
-outAddr :: UDPPair -> String
-outAddr (UDPPair _ (_,ad) _) = show ad
+type UDPSock = (Socket, SockAddr)
+
+sockToConn :: UDPSock -> (String, String) -> IO UDPConn
+sockToConn udpSock (cor, corPort) = do
+  let cp = fromIntegral (read corPort :: Int)
+  corAdd <- resolveAddr cor cp
+  return (UDPConn udpSock corAdd)
+
+newUDPSocket :: IO UDPSock
+newUDPSocket = do
+  sock <- socket AF_INET Datagram defaultProtocol
+
+  addr <- resolveAddr (show $ iNADDR_ANY) aNY_PORT
+  bind sock addr
+
+  addrS <- getSocketName sock
+  putStrLn $ "New socket on: " ++ show addrS
+  
+  return (sock,addrS)
+
+addr :: UDPConn -> String
+addr (UDPConn (_,ad) _) = show ad
 
 -- Utility function for resolving addresses
 resolveAddr :: String -> PortNumber -> IO SockAddr

@@ -27,24 +27,24 @@ process :: String -> Manager ()
 process cmd
   | cmd == "direct" = do
                       rt <- asks routingTable
-                      pp@((ins,_),(outs,_)) <- liftIO newUDPSockets
-                      newConn <- tryM (newUDPconn pp) :: Manager (Either SomeException (TQueue B.ByteString, UDPPair, Addr, Addr))
+                      pp@(sock,_) <- liftIO newUDPSocket
+                      newConn <- tryM (newUDPconn pp) :: Manager (Either SomeException (TQueue B.ByteString, UDPConn, Addr, Addr))
                       liftIO $ case newConn of
-                                    Left err -> putStrLn "New connection failed:" >> (putStrLn $ show err) >> close ins >> close outs
-                                    Right (q, _, !vad, !outad) -> newRoute rt vad (outad, q) >> putStrLn "New route added."
+                                    Left err -> putStrLn "New connection failed:" >> (putStrLn $ show err) >> close sock
+                                    Right (q, _, !vad, !corad) -> newRoute rt vad (corad, q) >> putStrLn "New route added."
   | otherwise = liftIO $ putStrLn $ "Invalid command: " ++ cmd
 
-newUDPconn :: PrePair -> Manager (TQueue B.ByteString, UDPPair, Addr, Addr)
+newUDPconn :: UDPSock -> Manager (TQueue B.ByteString, UDPConn, Addr, Addr)
 newUDPconn pp = do
-  injIO <- asks ( getInjectionQueue . routingTable)  -- asks ... returns an IO action to get the injector queue
+  injIO <- asks ( getInjectionQueue . routingTable )  -- asks ... returns an IO action to get the injector queue
   liftIO $ do
     inj <- injIO
-    (out:op:inb:ip:vadd:_) <- sequence $ fmap prompt ["Outbound","Port","Inbound","Port","Register at"]
+    (cor:corP:vadd:_) <- sequence $ fmap prompt ["Correspondance IP:","Port","Register at"]
     let vad = stringToAddr vadd
-        outad = stringToAddr out
-    udpp <- relayPair pp (out,op) (inb,ip)
+        corad = stringToAddr cor
+    udpp <- sockToConn pp (cor,corP)
     outstream <- makeRelay udpp inj
-    return $ (outstream, udpp, vad, outad)
+    return $ (outstream, udpp, vad, corad)
   where
     prompt pr = do
       putStrLn $ pr ++":"
