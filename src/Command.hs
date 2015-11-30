@@ -36,15 +36,15 @@ process cmd
 
 newUDPconn :: PrePair -> Manager (TQueue B.ByteString, UDPPair, Addr, Addr)
 newUDPconn pp = do
-                   injIO <- asks ( getInjectionQueue . routingTable)  -- asks ... returns an IO action to get the injector queue
-                   liftIO $ do
-                     inj <- injIO
-                     (out:op:inb:ip:vadd:_) <- sequence $ fmap prompt ["Outbound","Port","Inbound","Port","Register at"]
-                     let vad = stringToAddr vadd
-                         outad = stringToAddr out
-                     udpp <- relayPair pp (out,op) (inb,ip)
-                     outstream <- makeRelay udpp inj
-                     return $ (outstream, udpp, vad, outad)
+  injIO <- asks ( getInjectionQueue . routingTable)  -- asks ... returns an IO action to get the injector queue
+  liftIO $ do
+    inj <- injIO
+    (out:op:inb:ip:vadd:_) <- sequence $ fmap prompt ["Outbound","Port","Inbound","Port","Register at"]
+    let vad = stringToAddr vadd
+        outad = stringToAddr out
+    udpp <- relayPair pp (out,op) (inb,ip)
+    outstream <- makeRelay udpp inj
+    return $ (outstream, udpp, vad, outad)
   where
     prompt pr = do
       putStrLn $ pr ++":"
