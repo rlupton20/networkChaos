@@ -27,7 +27,8 @@ process :: String -> Manager ()
 process cmd
   | cmd == "direct" = do
                       rt <- asks routingTable
-                      pp@(sock,_) <- liftIO newUDPSocket
+                      pp <- liftIO newUDPSocket
+                      let sock = getSocket pp
                       newConn <- tryM (newUDPconn pp) :: Manager (Either SomeException (TQueue B.ByteString, UDPConn, Addr, Addr))
                       liftIO $ case newConn of
                                     Left err -> putStrLn "New connection failed:" >> (putStrLn $ show err) >> close sock

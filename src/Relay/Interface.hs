@@ -3,6 +3,7 @@ module Relay.Interface
 ( UDPConn
 , UDPSock
 , newUDPSocket
+, getSocket
 , sockToConn
 , addr ) where
 
@@ -31,13 +32,20 @@ instance Connection UDPConn where
     close sock
     return ()
 
-type UDPSock = (Socket, SockAddr)
+addr :: UDPConn -> String
+addr (UDPConn (_,ad) _) = show ad
+
+-- UDPSock is a type for a UDP socket to build a UDPConn on top of.
+-- To link instances of the software, the port of the sockets is
+-- required in advance.
+
+newtype UDPSock = UDPSock (Socket, SockAddr) deriving (Eq, Show)
 
 sockToConn :: UDPSock -> (String, String) -> IO UDPConn
-sockToConn udpSock (cor, corPort) = do
+sockToConn (UDPSock sockAndAddr) (cor, corPort) = do
   let cp = fromIntegral (read corPort :: Int)
   corAdd <- resolveAddr cor cp
-  return (UDPConn udpSock corAdd)
+  return (UDPConn sockAndAddr corAdd)
 
 newUDPSocket :: IO UDPSock
 newUDPSocket = do
@@ -49,10 +57,10 @@ newUDPSocket = do
   addrS <- getSocketName sock
   putStrLn $ "New socket on: " ++ show addrS
   
-  return (sock,addrS)
+  return $ UDPSock (sock,addrS)
 
-addr :: UDPConn -> String
-addr (UDPConn (_,ad) _) = show ad
+getSocket :: UDPSock -> Socket
+getSocket (UDPSock (sock,_)) = sock
 
 -- Utility function for resolving addresses
 resolveAddr :: String -> PortNumber -> IO SockAddr
