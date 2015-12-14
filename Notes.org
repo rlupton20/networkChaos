@@ -106,3 +106,5 @@ Haskell has the package stunclient, which provides the module Network.Stun
 This required libicu-dev to be installed in order that dependency text-icu can be installed.
 * Keeping peer-to-peer connections alive
 Have separate(s) thread sending and receiving messages to each peer to keep connections alive.
+* PPP Protocol
+Point-to-point protocol, can be used to deliver packets. Good idea here?
