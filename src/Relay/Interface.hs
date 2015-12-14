@@ -61,10 +61,3 @@ newUDPSocket = do
 
 getSocket :: UDPSock -> Socket
 getSocket (UDPSock (sock,_)) = sock
-
--- Utility function for resolving addresses
-resolveAddr :: String -> PortNumber -> IO SockAddr
-resolveAddr addr port = do
-  addrInfo <- getAddrInfo Nothing (Just addr) (Just $ show port)
-  let ads = map addrAddress addrInfo
-  return $ head ads
