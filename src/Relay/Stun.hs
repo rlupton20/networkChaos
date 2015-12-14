@@ -20,10 +20,15 @@ stun = do
   Right (msg, sock) <- stunRequest' stunAddr 0 [] brq
   let ext = getExternal msg
   case ext of
-       Right [ad] -> return (sock, ad)
+       Just ad -> return (sock, ad)
        _ -> error "Couldn't STUN."
 
-getExternal :: Message -> Either AttributeError [SockAddr]
-getExternal msg = ma
+getExternal :: Message -> Maybe SockAddr
+getExternal msg = xma <|> ma
   where
-    ma = fmap (fmap unMA) $ findAttribute (messageAttributes msg)
+    ma = case findAttribute (messageAttributes msg) of
+      Right [ad] -> Just (unMA ad)
+      _ -> Nothing
+    xma = case findAttribute (messageAttributes msg) of
+      Right [xad] -> Just $ fromXorMappedAddress (transactionID msg) xad
+      _ -> Nothing
