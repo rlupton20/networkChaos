@@ -14,6 +14,7 @@ import Control.Applicative
 
 -- Some test server for STUNning
 stunServer = "stun.ekiga.net"
+stunPort :: PortNumber
 stunPort = 3478
 
 --otherStun = "stun.schlund.de"
@@ -23,7 +24,7 @@ stunPort = 3478
 stunOn :: Socket -> SockAddr -> [Integer] -> IO SockAddr
 stunOn sock server timeouts = do
   brq <- bindRequest
-  let tos = if null timeouts then [500000,1000000,2000000] else timeouts
+  let tos = if null timeouts then defaults else timeouts
       msg = encode brq
 
   resp <- doSTUN msg sock server tos
@@ -32,7 +33,7 @@ stunOn sock server timeouts = do
       ext = fmap getExternal reply
   case ext of
     Right (Just ad) -> return ad
-    _ -> error "testSock failed."
+    _ -> error "Failed to decode an external address."
     
   where
     doSTUN msg sock server [] = error "STUN timed out."
@@ -42,6 +43,8 @@ stunOn sock server timeouts = do
       case rep of
         Just m -> return m
         Nothing -> doSTUN msg sock server tos
+
+    defaults = [500000,1000000,2000000]
 
 
 -- getExternal takes a STUN response and extracts the
