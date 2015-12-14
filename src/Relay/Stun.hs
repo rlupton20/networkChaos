@@ -16,8 +16,10 @@ stun :: IO (Socket, SockAddr)
 stun = do
   brq <- bindRequest
   stunAddr <- resolveAddr stunServer 3478
-  -- stunr <- findMappedAddress stunAddr 0 []
-  Right (msg, sock) <- stunRequest' stunAddr 0 [] brq
+  res <- stunRequest' stunAddr 0 [] brq
+  (msg, sock) <- case res of
+    Right (msg, sock) -> return (msg, sock)
+    Left e -> error $ show e
   let ext = getExternal msg
   case ext of
        Just ad -> return (sock, ad)
