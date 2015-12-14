@@ -2,30 +2,46 @@ module Relay.Stun
 ( ) where
 
 import Relay.Connection
-import Network.Socket
+
+import Network.Socket hiding (send, sendTo, recv, recvFrom)
+import Network.Socket.ByteString
 import Network.Stun
 import Network.Stun.Internal
 
+import Data.Serialize
+import Control.Concurrent.Timeout
 import Control.Applicative
 
+-- Some test server for STUNning
 stunServer = "stun.ekiga.net"
+stunPort = 3478
 
--- stun returns a socket with its external address
-stun :: IO (Socket, SockAddr)
-stun = do
+--otherStun = "stun.schlund.de"
+
+-- Uses a given socket to stun with. More useful than the
+-- Network.Stun library functions.
+stunOn :: Socket -> SockAddr -> [Integer] -> IO SockAddr
+stunOn sock server timeouts = do
   brq <- bindRequest
-  stunAddr <- resolveAddr stunServer 3478
-  res <- stunRequest' stunAddr 0 [] brq
-  
-  (msg, sock) <- case res of
-    Right (msg, sock) -> return (msg, sock)
-    Left e -> error $ show e
+  let tos = if null timeouts then [500000,1000000,2000000] else timeouts
+      msg = encode brq
 
-  let ext = getExternal msg
+  resp <- doSTUN msg sock server tos
 
+  let reply = decode resp
+      ext = fmap getExternal reply
   case ext of
-       Just ad -> return (sock, ad)
-       _ -> error "Couldn't STUN."
+    Right (Just ad) -> return ad
+    _ -> error "testSock failed."
+    
+  where
+    doSTUN msg sock server [] = error "STUN timed out."
+    doSTUN msg sock server (to:tos) = do
+      sendTo sock msg server
+      rep <- timeout to $ recv sock 4096
+      case rep of
+        Just m -> return m
+        Nothing -> doSTUN msg sock server tos
 
 
 -- getExternal takes a STUN response and extracts the
