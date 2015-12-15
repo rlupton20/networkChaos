@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-} -- temporary
 module Relay.Stun
 ( ) where
 
@@ -9,15 +10,22 @@ import Network.Stun
 import Network.Stun.Internal
 
 import Data.Serialize
+import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Concurrent.Timeout
 import Control.Applicative
 
--- Some test server for STUNning
-stunServer = "stun.ekiga.net"
-stunPort :: PortNumber
-stunPort = 3478
+-- Temporary imports
+import Data.String
 
---otherStun = "stun.schlund.de"
+
+-- List of stun servers
+stuns :: [(String, PortNumber)]
+stuns = [("stun.ekiga.net",3478), ("stun.schlund.de",3478)]
+
+-- List of resolved addressses
+stunads :: IO [SockAddr]
+stunads = sequence $ map (uncurry resolveAddr) stuns
 
 -- Uses a given socket to stun with. More useful than the
 -- Network.Stun library functions.
@@ -58,3 +66,52 @@ getExternal msg = xma <|> ma  -- Two possible encodings
     xma = case findAttribute (messageAttributes msg) of
       Right [xad] -> Just $ fromXorMappedAddress (transactionID msg) xad
       _ -> Nothing
+
+
+-- Test for symmetric NAT
+-- Not robust wrt to repeated replies
+-- Make use of transaction IDs?
+symNAT :: Socket -> IO Bool
+symNAT sock = do
+  ads <- stunads
+  let ad1 = ads!!0
+      ad2 = ads!!1
+  ext1 <- stunOn sock ad1 []
+  ext2 <- stunOn sock ad2 []
+  return $ not (ext1 == ext2)
+
+-- Try and holepunch NAT
+holepunch :: IO ()
+holepunch = do
+  sock <- socket AF_INET Datagram defaultProtocol
+  sockad <- resolveAddr (show $ iNADDR_ANY) aNY_PORT
+  bind sock sockad
+ 
+  (stun:_) <- stunads
+
+  ext <- stunOn sock stun []
+  putStrLn $ "I am " ++ show ext
+
+  putStrLn "IP:"
+  ip <- getLine
+  putStrLn "Port:"
+  p' <- (fmap read getLine) :: IO Integer
+  let p = fromIntegral p'
+
+  corr <- resolveAddr ip p
+  putStrLn $ show corr
+
+  race_ (punch sock corr) (take sock)
+  
+  close sock
+
+  where
+    punch s c = do
+      sendTo s (fromString $ "PUNCH") c
+      threadDelay 1000000
+      punch s c
+
+    take s = do
+      recv s 4096 >>= putStrLn.show
+      take s
+      

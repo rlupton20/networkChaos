@@ -108,3 +108,7 @@ This required libicu-dev to be installed in order that dependency text-icu can b
 Have separate(s) thread sending and receiving messages to each peer to keep connections alive.
 * PPP Protocol
 Point-to-point protocol, can be used to deliver packets. Good idea here?
+* TURN protocol
+If STUN fails then TURN.
+Free (with sign up) TURN server
+http://numb.viagenie.ca/
