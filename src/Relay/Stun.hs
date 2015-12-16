@@ -67,18 +67,20 @@ getExternal msg = xma <|> ma  -- Two possible encodings
       Right [xad] -> Just $ fromXorMappedAddress (transactionID msg) xad
       _ -> Nothing
 
-
+-- MANY REASONS STUN MAY FAIL
+-- SYMMETRIC NAT IS JUST ONE, PROBABLY UNECESSARY
+-- TO TEST FOR
 -- Test for symmetric NAT
 -- Not robust wrt to repeated replies
 -- Make use of transaction IDs?
-symNAT :: Socket -> IO Bool
+{- symNAT :: Socket -> IO Bool
 symNAT sock = do
   ads <- stunads
   let ad1 = ads!!0
       ad2 = ads!!1
   ext1 <- stunOn sock ad1 []
   ext2 <- stunOn sock ad2 []
-  return $ not (ext1 == ext2)
+  return $ not (ext1 == ext2) -}
 
 -- Try and holepunch NAT
 holepunch :: IO ()
