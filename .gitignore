@@ -8,3 +8,7 @@
 
 # Compiled file
 /src/main
+
+# Cabal sandboxes
+/.cabal-sandbox/*
+cabal.sandbox.config
