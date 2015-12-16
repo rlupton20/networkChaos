@@ -112,3 +112,5 @@ Point-to-point protocol, can be used to deliver packets. Good idea here?
 If STUN fails then TURN.
 Free (with sign up) TURN server
 http://numb.viagenie.ca/
+* cabal
+https://downloads.haskell.org/~ghc/7.0.4/docs/html/Cabal/authors.html

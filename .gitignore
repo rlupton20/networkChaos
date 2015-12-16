@@ -12,3 +12,6 @@
 # Cabal sandboxes
 /.cabal-sandbox/*
 cabal.sandbox.config
+
+# Cabal build
+/dist/*
