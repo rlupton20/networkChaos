@@ -2,10 +2,7 @@ module Main where
 
 import Control.Concurrent
 
---import Network.TunTap.TunTap
 import Network.TunTap
---import System.Posix.IO
---import ProcessThread
 import Network.ReaderThread
 
 import Routing.Routing
@@ -35,10 +32,8 @@ main = do
 
   q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
 
-  --fd <- openTunTap TUN device [noPI]
-  --fd `handleToAction` (\bs -> bs `routeTo` q)
   tun <- openTUN device
-  fromTUN tun (\bs -> bs `routeTo` q)
+  onTUN tun (\bs -> bs `routeTo` q)
 
   -- Start a command line
   let env = Environment rt
