@@ -2,11 +2,11 @@ module Main where
 
 import Control.Concurrent
 
-import Collector.PacketCapture
-
+--import Network.TunTap.TunTap
 import Network.TunTap
-import System.Posix.IO
-import ProcessThread
+--import System.Posix.IO
+--import ProcessThread
+import Network.ReaderThread
 
 import Routing.Routing
 import Routing.RoutingTable
@@ -25,23 +25,25 @@ import qualified Data.ByteString as B
 import Debug.QueueReader (makeQueueReader, newQueueAndReader)
 -- End temporary section
 
+device :: String
+device = "vgl0"
+
 main :: IO ()
 main = do
   (routeChan, rt) <- makeRouter
   createRoutingTable rt
 
   q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
-  
-  --etherStripper <- makeEtherStripper $ \bs -> bs `routeTo` q
-  --"wlp3s0" `directTo` (\bs -> bs `routeTo` etherStripper)
 
-  fd <- openTunTap TUN "vgl0" [noPI]
-  fd `handleToAction` (\bs -> bs `routeTo` q)
+  --fd <- openTunTap TUN device [noPI]
+  --fd `handleToAction` (\bs -> bs `routeTo` q)
+  tun <- openTUN device
+  fromTUN tun (\bs -> bs `routeTo` q)
 
   -- Start a command line
   let env = Environment rt
   commandLine `manageWith` env
-  --closeFd fd
+  closeTUN tun
   return ()
 
 -- Test function, building a basic routing table

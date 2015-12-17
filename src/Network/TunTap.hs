@@ -1,8 +1,13 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE ForeignFunctionInterface, PackageImports, RecordWildCards #-}
 module Network.TunTap
 ( openTunTap
 , TunTap(..)
-, noPI ) where
+, noPI
+, TUNDevice
+, openTUN
+, closeTUN
+, readTUN
+, writeTUN ) where
 
 import Foreign
 import Foreign.C.Types
@@ -13,7 +18,9 @@ import Data.List
 import Data.Bits
 
 import System.Posix.Types
-import System.Posix.IO
+import System.Posix.IO (closeFd)
+import "unix-bytestring" System.Posix.IO.ByteString
+import qualified Data.ByteString as B
 
 data TunTap = TUN | TAP deriving (Show, Eq)
 type TTFlag = CInt
@@ -47,3 +54,15 @@ openTunTap tt name flags = do
   fd <- c_getTunTap c_name params
   
   return $ Fd fd
+
+data TUNDevice = TUNDevice { name :: String
+                           , fd :: Fd }
+
+closeTUN TUNDevice{..} = closeFd fd
+readTUN TUNDevice{..} = fdRead fd 65536
+writeTUN TUNDevice{..} bs = fdWrite fd bs >> return () 
+  
+openTUN :: String -> IO TUNDevice
+openTUN name = do
+    fd <- openTunTap TUN name [noPI]
+    return $ TUNDevice name fd

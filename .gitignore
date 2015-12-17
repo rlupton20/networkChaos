@@ -7,7 +7,7 @@
 *.hi
 
 # Compiled file
-/src/main
+/src/Main
 
 # Cabal sandboxes
 /.cabal-sandbox/*
