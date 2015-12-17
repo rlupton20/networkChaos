@@ -58,8 +58,13 @@ openTunTap tt name flags = do
 data TUNDevice = TUNDevice { name :: String
                            , fd :: Fd }
 
+closeTUN :: TUNDevice -> IO ()
 closeTUN TUNDevice{..} = closeFd fd
+
+readTUN :: TUNDevice -> IO B.ByteString
 readTUN TUNDevice{..} = fdRead fd 65536
+
+writeTUN :: TUNDevice -> B.ByteString -> IO ()
 writeTUN TUNDevice{..} bs = fdWrite fd bs >> return () 
   
 openTUN :: String -> IO TUNDevice
