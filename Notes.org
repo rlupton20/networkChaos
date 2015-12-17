@@ -114,3 +114,5 @@ Free (with sign up) TURN server
 http://numb.viagenie.ca/
 * cabal
 https://downloads.haskell.org/~ghc/7.0.4/docs/html/Cabal/authors.html
+* FFI and C
+http://blog.bjrn.se/2008/09/speeding-up-haskell-with-c-very-short.html
