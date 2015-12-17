@@ -4,6 +4,10 @@ import Control.Concurrent
 
 import Collector.PacketCapture
 
+import Network.TunTap
+import System.Posix.IO
+import ProcessThread
+
 import Routing.Routing
 import Routing.RoutingTable
 import Routing.PacketParsing.Ether
@@ -18,20 +22,26 @@ import Environments
 import Routing.PacketParsing.IP4 (addr, parseIP4)
 import Control.Concurrent.STM.TQueue
 import qualified Data.ByteString as B
-import Debug.QueueReader (makeQueueReader)
+import Debug.QueueReader (makeQueueReader, newQueueAndReader)
 -- End temporary section
 
 main :: IO ()
 main = do
   (routeChan, rt) <- makeRouter
   createRoutingTable rt
+
+  q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
   
-  etherStripper <- makeEtherStripper $ \bs -> bs `routeTo` routeChan
-  "wlp3s0" `directTo` (\bs -> bs `routeTo` etherStripper)
+  --etherStripper <- makeEtherStripper $ \bs -> bs `routeTo` q
+  --"wlp3s0" `directTo` (\bs -> bs `routeTo` etherStripper)
+
+  fd <- openTunTap TUN "vgl0" [noPI]
+  fd `handleToAction` (\bs -> bs `routeTo` q)
 
   -- Start a command line
   let env = Environment rt
   commandLine `manageWith` env
+  --closeFd fd
   return ()
 
 -- Test function, building a basic routing table

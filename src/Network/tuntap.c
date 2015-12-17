@@ -10,8 +10,6 @@
 
 #include <sys/ioctl.h>
 
-#include <stdio.h>
-
 /* Lets define some useful flags (functionally) */
 int tun(){ return IFF_TUN; }
 int tap(){ return IFF_TAP; }

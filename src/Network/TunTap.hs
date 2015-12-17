@@ -1,7 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-module Collector.Posix.TunTap
+module Network.TunTap
 ( openTunTap
-, TunTap(..) ) where
+, TunTap(..)
+, noPI ) where
 
 import Foreign
 import Foreign.C.Types
@@ -11,12 +12,14 @@ import Foreign.Ptr
 import Data.List
 import Data.Bits
 
-import System.IO
 import System.Posix.Types
 import System.Posix.IO
 
 data TunTap = TUN | TAP deriving (Show, Eq)
 type TTFlag = CInt
+
+noPI :: TTFlag
+noPI = c_no_pi
 
 foreign import ccall "tuntap.h tun"
   c_tun :: CInt
@@ -35,7 +38,7 @@ foreign import ccall "tuntap.h getTunTap"
 
 
 -- Convert our C function into a Haskell function
-openTunTap :: TunTap -> String -> [TTFlag] -> IO Handle
+openTunTap :: TunTap -> String -> [TTFlag] -> IO Fd
 openTunTap tt name flags = do
   let init = if tt == TUN then c_tun else c_tap
       params = foldl' (.|.) init flags
@@ -43,5 +46,4 @@ openTunTap tt name flags = do
 
   fd <- c_getTunTap c_name params
   
-  handle <- fdToHandle $ Fd fd
-  return handle
+  return $ Fd fd
