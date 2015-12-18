@@ -52,8 +52,13 @@ openTunTap tt name flags = do
   c_name <- newCString $ take (fromIntegral c_ifnamsiz) name
 
   fd <- c_getTunTap c_name params
-  
-  return $ Fd fd
+
+  -- Note that c_getTunTap might return a bad file descriptor
+  -- (in the case of an error)
+  if fd < 0 then
+    (error $ "Couldn't open TUN device: " ++ name)
+    else
+    return $ Fd fd
 
 data TUNDevice = TUNDevice { name :: String
                            , fd :: Fd }
