@@ -15,6 +15,8 @@ import Relay.Debug
 import Command
 import Environments
 
+import System.Environment
+
 -- Only needed when setting up router
 import Routing.PacketParsing.IP4 (addr, parseIP4)
 import Control.Concurrent.STM.TQueue
@@ -22,18 +24,18 @@ import qualified Data.ByteString as B
 import Debug.QueueReader (makeQueueReader, newQueueAndReader)
 -- End temporary section
 
-device :: String
-device = "vgl0"
-
 main :: IO ()
 main = do
+  -- First lets deal with the command line arguments
+  [device, myip] <- getArgs
+  
   (routeChan, rt) <- makeRouter
-  createRoutingTable rt
+  createRoutingTable rt myip
 
   q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
 
   tun <- openTUN device
-  onTT tun (\bs -> bs `routeTo` q)
+  onTT tun (\bs -> bs `routeTo` routeChan)
 
   -- Start a command line
   let env = Environment rt
@@ -42,10 +44,9 @@ main = do
   return ()
 
 -- Test function, building a basic routing table
-createRoutingTable :: RoutingTable -> IO ()
-createRoutingTable rt = do
-  rt `setLocal` (addr "192.168.1.100")
-  rt `setVirtual` (addr "10.0.0.1")
+createRoutingTable :: RoutingTable -> String -> IO ()
+createRoutingTable rt ip = do
+  rt `setAddr` (addr ip)
   inj <- getInjectionQueue rt
-  makeQueueReader inj (\bs -> putStrLn $ show bs)
+  makeQueueReader inj (\bs -> putStrLn.show $ parseIP4 bs)
   return ()

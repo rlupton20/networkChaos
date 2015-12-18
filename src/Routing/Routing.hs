@@ -23,7 +23,9 @@ makeRouter = do
 
 routeTo :: a -> (TQueue a) -> IO ()
 routeTo x xq = atomically $ writeTQueue xq x
-  
+
+-- routeWith takes a TQueue of packets, and a RoutingTable,
+-- and puts each packet on the correct exit queue
 routeWith :: (TQueue B.ByteString) -> RoutingTable -> IO ()
 routeWith bsq rt = loop
   where
@@ -34,14 +36,13 @@ routeWith bsq rt = loop
              Just ppck -> do
                redir <- lookup ppck
                case redir of
-                 Just (newsrc, rchan) -> do
-                   let nbs =  toBytes $ ppck `setSource` newsrc
-                   atomically $ writeTQueue rchan nbs
+                 Just rchan -> do
+                   atomically $ writeTQueue rchan bs
                  Nothing -> return ()
              Nothing -> return ()
            loop
 
     lookup ppck = do
       let dest = getDest ppck
-      (newsrc, redirect) <- dest `getDirectionWith` rt
-      return $ redirect >>= (\(_, routechan) -> Just (newsrc, routechan) )
+      redirect <- dest `getDirectionWith` rt
+      return $ fmap snd redirect
