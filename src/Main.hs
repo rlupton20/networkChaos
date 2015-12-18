@@ -33,12 +33,12 @@ main = do
   q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
 
   tun <- openTUN device
-  onTUN tun (\bs -> bs `routeTo` q)
+  onTT tun (\bs -> bs `routeTo` q)
 
   -- Start a command line
   let env = Environment rt
   commandLine `manageWith` env
-  closeTUN tun
+  closeTT tun
   return ()
 
 -- Test function, building a basic routing table

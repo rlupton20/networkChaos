@@ -1,13 +1,13 @@
 {-# LANGUAGE ForeignFunctionInterface, PackageImports, RecordWildCards #-}
 module Network.TunTap
 ( openTunTap
-, TunTap(..)
+, TTType(..)
 , noPI
-, TUNDevice
+, TunTap
 , openTUN
-, closeTUN
-, readTUN
-, writeTUN ) where
+, closeTT
+, readTT
+, writeTT ) where
 
 import Foreign
 import Foreign.C.Types
@@ -22,7 +22,7 @@ import System.Posix.IO (closeFd)
 import "unix-bytestring" System.Posix.IO.ByteString
 import qualified Data.ByteString as B
 
-data TunTap = TUN | TAP deriving (Show, Eq)
+data TTType = TUN | TAP deriving (Show, Eq)
 type TTFlag = CInt
 
 noPI :: TTFlag
@@ -45,7 +45,7 @@ foreign import ccall "tuntap.h getTunTap"
 
 
 -- Convert our C function into a Haskell function
-openTunTap :: TunTap -> String -> [TTFlag] -> IO Fd
+openTunTap :: TTType -> String -> [TTFlag] -> IO Fd
 openTunTap tt name flags = do
   let init = if tt == TUN then c_tun else c_tap
       params = foldl' (.|.) init flags
@@ -60,19 +60,20 @@ openTunTap tt name flags = do
     else
     return $ Fd fd
 
-data TUNDevice = TUNDevice { name :: String
-                           , fd :: Fd }
+data TunTap = TunTap { name :: String
+                     , tttype :: TTType
+                     , fd :: Fd }
 
-closeTUN :: TUNDevice -> IO ()
-closeTUN TUNDevice{..} = closeFd fd
+closeTT :: TunTap -> IO ()
+closeTT TunTap{..} = closeFd fd
 
-readTUN :: TUNDevice -> IO B.ByteString
-readTUN TUNDevice{..} = fdRead fd 65536
+readTT :: TunTap -> IO B.ByteString
+readTT TunTap{..} = fdRead fd 65536
 
-writeTUN :: TUNDevice -> B.ByteString -> IO ()
-writeTUN TUNDevice{..} bs = fdWrite fd bs >> return () 
+writeTT :: TunTap -> B.ByteString -> IO ()
+writeTT TunTap{..} bs = fdWrite fd bs >> return () 
   
-openTUN :: String -> IO TUNDevice
+openTUN :: String -> IO TunTap
 openTUN name = do
     fd <- openTunTap TUN name [noPI]
-    return $ TUNDevice name fd
+    return $ TunTap name TUN fd

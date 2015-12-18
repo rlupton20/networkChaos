@@ -1,13 +1,13 @@
 module Network.ReaderThread
-( onTUN ) where
+( onTT ) where
 
 import qualified Data.ByteString as B
 import Control.Concurrent
 import Network.TunTap
 
-onTUN :: TUNDevice -> (B.ByteString -> IO ()) -> IO ()
-onTUN dev action = (forkIO $ loop dev action) >> return ()
+onTT :: TunTap -> (B.ByteString -> IO ()) -> IO ()
+onTT dev action = (forkIO $ loop dev action) >> return ()
   where loop dev action = do
-          bs <- readTUN dev
+          bs <- readTT dev
           action bs
           loop dev action
