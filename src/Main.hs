@@ -30,11 +30,11 @@ main = do
   [device, myip] <- getArgs
   
   (routeChan, rt) <- makeRouter
-  createRoutingTable rt myip
 
-  q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
+  --q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
 
   tun <- openTUN device
+  createRoutingTable rt myip tun
   onTT tun (\bs -> bs `routeTo` routeChan)
 
   -- Start a command line
@@ -44,9 +44,11 @@ main = do
   return ()
 
 -- Test function, building a basic routing table
-createRoutingTable :: RoutingTable -> String -> IO ()
-createRoutingTable rt ip = do
+createRoutingTable :: RoutingTable -> String -> TunTap -> IO ()
+createRoutingTable rt ip tt = do
   rt `setAddr` (addr ip)
   inj <- getInjectionQueue rt
-  makeQueueReader inj (\bs -> putStrLn.show $ parseIP4 bs)
+  makeQueueReader inj (\bs -> do
+                          putStrLn.show $ parseIP4 bs
+                          writeTT tt bs )
   return ()
