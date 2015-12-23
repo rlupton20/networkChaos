@@ -51,23 +51,25 @@ openTunTap tt name flags = allocaArray0 (fromIntegral c_ifnamsiz) $ \cstr -> do
   let init = if tt == TUN then c_tun else c_tap
       params = foldl' (.|.) init flags
       cnul = castCharToCChar '\0'
-      ccname = fmap (castCharToCChar) $ take (fromIntegral c_ifnamsiz) name
+      -- Note IFNAMSIZ sized buffers include the terminating null byte
+      -- so we can only allow names of length (IFNAMSIZ - 1)
+      ccname = fmap (castCharToCChar) $ take (fromIntegral c_ifnamsiz - 1) name
 
   (fd, asname) <- withArray ccname $ \cname -> do
                                      lname <- lengthArray0 cnul cname
+                                     -- Now remember to copy the null
+                                     -- character.
                                      copyArray cstr cname (lname+1)
                                      fd <- c_getTunTap cstr params
                                      asname <- peekCString cstr
                                      return (fd, asname)
-
-  putStrLn $ "Opened device " ++ asname
 
   -- Note that c_getTunTap might return a bad file descriptor
   -- (in the case of an error)
   if fd < 0 then
     (error $ "Couldn't open TUN device: " ++ name)
     else
-    return $ (Fd fd, asname)
+      putStrLn ("Opened device " ++ asname) >> return (Fd fd, asname)
 
 data TunTap = TunTap { name :: String
                      , tttype :: TTType

@@ -10,6 +10,13 @@
 
 #include <sys/ioctl.h>
 
+#ifdef _TT_DEBUG
+/* The following is a utility function for checking strings
+   have terminating NULL bytes. Useful since we're manually
+   copying strings between buffers. */
+int hasNullBy(char *, int);
+#endif
+
 /* Lets define some useful flags (functionally) */
 int tun(){ return IFF_TUN; }
 int tap(){ return IFF_TAP; }
@@ -21,7 +28,7 @@ int ifnamsiz(){ return IFNAMSIZ; }
 int getTunTap(char *name, int flags){
   /* ifr contains the parameters for the ioctl */
   struct ifreq req;
-
+  
   /* We open the device and get a file descriptor */
   int fd, err;
 
@@ -55,7 +62,20 @@ int getTunTap(char *name, int flags){
 
   /* Copy the name that was actually used for the device
      into the name string (the ioctl will write it to the
-     request structure we passed it) */
+     request structure we passed it). Note that name needs
+     to have enough memory assigned to hold the resulting
+     string. Our Haskell wrapper deals with this. The buffer
+     needs to be at least IFNAMSIZ bytes long. */
   strcpy(name, req.ifr_name);
   return fd;
 }
+
+#ifdef _TT_DEBUG
+int hasNullBy(char * str, int n) {
+  while (n >= 0) {
+    if ( str[n] == '\0' ) return 1;
+    n--;
+  }
+  return 0;
+}
+#endif
