@@ -13,6 +13,7 @@ import Foreign
 import Foreign.C.Types
 import Foreign.C.String
 import Foreign.Ptr
+import Foreign.Marshal.Array
 
 import Data.List
 import Data.Bits
@@ -45,20 +46,28 @@ foreign import ccall "tuntap.h getTunTap"
 
 
 -- Convert our C function into a Haskell function
-openTunTap :: TTType -> String -> [TTFlag] -> IO Fd
-openTunTap tt name flags = do
+openTunTap :: TTType -> String -> [TTFlag] -> IO (Fd, String)
+openTunTap tt name flags = allocaArray0 (fromIntegral c_ifnamsiz) $ \cstr -> do
   let init = if tt == TUN then c_tun else c_tap
       params = foldl' (.|.) init flags
-  c_name <- newCString $ take (fromIntegral c_ifnamsiz) name
+      cnul = castCharToCChar '\0'
+      ccname = fmap (castCharToCChar) $ take (fromIntegral c_ifnamsiz) name
 
-  fd <- c_getTunTap c_name params
+  (fd, asname) <- withArray ccname $ \cname -> do
+                                     lname <- lengthArray0 cnul cname
+                                     copyArray cstr cname (lname+1)
+                                     fd <- c_getTunTap cstr params
+                                     asname <- peekCString cstr
+                                     return (fd, asname)
+
+  putStrLn $ "Opened device " ++ asname
 
   -- Note that c_getTunTap might return a bad file descriptor
   -- (in the case of an error)
   if fd < 0 then
     (error $ "Couldn't open TUN device: " ++ name)
     else
-    return $ Fd fd
+    return $ (Fd fd, asname)
 
 data TunTap = TunTap { name :: String
                      , tttype :: TTType
@@ -75,5 +84,5 @@ writeTT TunTap{..} bs = fdWrite fd bs >> return ()
   
 openTUN :: String -> IO TunTap
 openTUN name = do
-    fd <- openTunTap TUN name [noPI]
-    return $ TunTap name TUN fd
+    (fd, asname) <- openTunTap TUN name [noPI]
+    return $ TunTap asname TUN fd

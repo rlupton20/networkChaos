@@ -52,6 +52,10 @@ int getTunTap(char *name, int flags){
     close(fd);
     return err;
   }
-    
+
+  /* Copy the name that was actually used for the device
+     into the name string (the ioctl will write it to the
+     request structure we passed it) */
+  strcpy(name, req.ifr_name);
   return fd;
 }
