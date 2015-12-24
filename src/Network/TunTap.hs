@@ -45,7 +45,10 @@ foreign import ccall "tuntap.h getTunTap"
   c_getTunTap :: Ptr CChar -> CInt -> IO CInt
 
 
--- Convert our C function into a Haskell function
+-- Convert our C function into a Haskell function.
+-- If an empty name is passed in, then the kernel will assign
+-- a name. In any case, the assigned name is passed out by the
+-- function.
 openTunTap :: TTType -> String -> [TTFlag] -> IO (Fd, String)
 openTunTap tt name flags = allocaArray0 (fromIntegral c_ifnamsiz) $ \cstr -> do
   let init = if tt == TUN then c_tun else c_tap
@@ -61,6 +64,8 @@ openTunTap tt name flags = allocaArray0 (fromIntegral c_ifnamsiz) $ \cstr -> do
                                      -- character.
                                      copyArray cstr cname (lname+1)
                                      fd <- c_getTunTap cstr params
+                                     -- c_getTunTap writes the opened
+                                     -- device name back to cstr
                                      asname <- peekCString cstr
                                      return (fd, asname)
 

@@ -36,7 +36,7 @@ int getTunTap(char *name, int flags){
   char *device = "/dev/net/tun";
 
   /* Try and open the device, noting a negative
-     file descriptor (once returned) indicate
+     file descriptor (once returned) indicates
      an error. */  
   if ( (fd = open(device, O_RDWR)) < 0 ) {
       return fd;
