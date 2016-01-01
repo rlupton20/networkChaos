@@ -8,6 +8,7 @@ module Relay.Interface
 , addr ) where
 
 import Relay.Connection
+import Utils
 
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
@@ -43,7 +44,8 @@ newtype UDPSock = UDPSock (Socket, SockAddr) deriving (Eq, Show)
 
 sockToConn :: UDPSock -> (String, String) -> IO UDPConn
 sockToConn (UDPSock sockAndAddr) (cor, corPort) = do
-  let cp = fromIntegral (read corPort :: Int)
+  destP <- (readM corPort :: IO Int)
+  let cp = fromIntegral destP
   corAdd <- resolveAddr cor cp
   return (UDPConn sockAndAddr corAdd)
 

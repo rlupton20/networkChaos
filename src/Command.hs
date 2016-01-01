@@ -4,6 +4,7 @@ module Command
 
 import Environments
 import Control.Monad.IO.Class
+import Utils
   
 import Routing.RoutingTable
 import Relay.Relay
@@ -40,16 +41,16 @@ newUDPconn pp = do
   injIO <- asks ( getInjectionQueue . routingTable )  -- asks ... returns an IO action to get the injector queue
   liftIO $ do
     inj <- injIO
-    (cor:corP:vadd:_) <- sequence $ fmap prompt ["Correspondance IP:","Port","Register at"]
-    let vad = stringToAddr vadd
-        corad = stringToAddr cor
+    [cor,corP,vadd] <- sequence $ fmap prompt ["Correspondance IP:","Port","Register at"]
+
+    corad <- (readM cor :: IO Addr)
+    vad <- (readM vadd :: IO Addr)
+
     udpp <- sockToConn pp (cor,corP)
     outstream <- makeRelay udpp inj
     return $ (outstream, udpp, vad, corad)
   where
+    prompt :: String -> IO String
     prompt pr = do
       putStrLn $ pr ++":"
       getLine
-
-    stringToAddr :: String -> Addr
-    stringToAddr = read
