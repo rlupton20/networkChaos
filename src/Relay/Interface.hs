@@ -41,11 +41,11 @@ newtype UDPSock = UDPSock (Socket, SockAddr) deriving (Eq, Show)
 -- |sockToConn takes a UDPSock, and a correspondence IP address
 -- and port, and builds a UDPConn from them.
 sockToConn :: UDPSock -> (String, String) -> IO UDPConn
-sockToConn (UDPSock sockAndAddr) (cor, corPort) = do
-  destP <- (readM corPort :: IO Int)
-  let cp = fromIntegral destP
-  corAdd <- resolveAddr cor cp
-  return (UDPConn sockAndAddr corAdd)
+sockToConn (UDPSock udpsock) (corr, corrPort) = do
+  destPort <- (readM corrPort :: IO Int)
+  let portNum = fromIntegral destPort
+  corAdd <- resolveAddr corr portNum
+  return (UDPConn udpsock corAdd)
 
 -- |newUDPSocket returns a new UDPSock structure, with the
 -- underlying socket bound to a random port.
@@ -54,8 +54,8 @@ newUDPSocket = do
   sock <- socket AF_INET Datagram defaultProtocol
   addr <- resolveAddr (show $ iNADDR_ANY) aNY_PORT
   bind sock addr
-  addrS <- getSocketName sock
-  return $ UDPSock (sock,addrS)
+  sockaddr <- getSocketName sock
+  return $ UDPSock (sock,sockaddr)
 
 -- |getSocket returns the underlying socket of a UDPSock.
 getSocket :: UDPSock -> Socket
@@ -64,4 +64,4 @@ getSocket (UDPSock (sock,_)) = sock
 -- |getSockAddr returns the address bound to the underlying
 -- socket of a UDPSock.
 getSockAddr :: UDPSock -> SockAddr
-getSockAddr (UDPSock (_,ad)) = ad
+getSockAddr (UDPSock (_,addr)) = addr
