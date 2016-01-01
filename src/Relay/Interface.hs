@@ -1,12 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Relay.Interface
 ( UDPConn
 , UDPSock
 , newUDPSocket
 , getSocket
 , getSockAddr
-, sockToConn
-, addr ) where
+, sockToConn ) where
 
 import Relay.Connection
 import Utils
@@ -15,34 +13,33 @@ import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 import qualified Data.ByteString.Char8 as B
 
-import Data.String
-
--- UDPPair is a standard pair of UDP sockets for sending and receiving;
--- hopefully later they will be replaced by encrypted sockets
+-- |UDPConn represents a single UDP socket with a prescribed
+-- corresponding socket to communicate with.
 data UDPConn = UDPConn (Socket, SockAddr) SockAddr deriving (Show)
 
 instance Connection UDPConn where
-  receiveOn (UDPConn (sock, _) corr) = do
+  receiveOn con@(UDPConn (sock, _) corr) = do
     (message, recp) <- recvFrom sock 8192
-    if recp == corr then return message else putStrLn ("Bad client" ++ show recp)>> (return $ fromString "")
+    if recp == corr then return message
+       else putStrLn ("Bad client" ++ show recp) >> receiveOn con
     return message
+    
   sendOn str (UDPConn (sock, _) corr) = do
     sent <- sendTo sock str corr
     putStrLn $ show sent ++ " bytes sent"
     return ()
+    
   closeConn (UDPConn (sock,_) _) = do
     close sock
     return ()
 
-addr :: UDPConn -> String
-addr (UDPConn (_,ad) _) = show ad
-
--- UDPSock is a type for a UDP socket to build a UDPConn on top of.
+-- |UDPSock is a type for a UDP socket to build a UDPConn on top of.
 -- To link instances of the software, the port of the sockets is
 -- required in advance.
-
 newtype UDPSock = UDPSock (Socket, SockAddr) deriving (Eq, Show)
 
+-- |sockToConn takes a UDPSock, and a correspondence IP address
+-- and port, and builds a UDPConn from them.
 sockToConn :: UDPSock -> (String, String) -> IO UDPConn
 sockToConn (UDPSock sockAndAddr) (cor, corPort) = do
   destP <- (readM corPort :: IO Int)
@@ -50,19 +47,21 @@ sockToConn (UDPSock sockAndAddr) (cor, corPort) = do
   corAdd <- resolveAddr cor cp
   return (UDPConn sockAndAddr corAdd)
 
+-- |newUDPSocket returns a new UDPSock structure, with the
+-- underlying socket bound to a random port.
 newUDPSocket :: IO UDPSock
 newUDPSocket = do
   sock <- socket AF_INET Datagram defaultProtocol
-
   addr <- resolveAddr (show $ iNADDR_ANY) aNY_PORT
   bind sock addr
-
   addrS <- getSocketName sock
-  
   return $ UDPSock (sock,addrS)
 
+-- |getSocket returns the underlying socket of a UDPSock.
 getSocket :: UDPSock -> Socket
 getSocket (UDPSock (sock,_)) = sock
 
+-- |getSockAddr returns the address bound to the underlying
+-- socket of a UDPSock.
 getSockAddr :: UDPSock -> SockAddr
 getSockAddr (UDPSock (_,ad)) = ad
