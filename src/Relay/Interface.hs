@@ -4,6 +4,7 @@ module Relay.Interface
 , UDPSock
 , newUDPSocket
 , getSocket
+, getSockAddr
 , sockToConn
 , addr ) where
 
@@ -57,9 +58,11 @@ newUDPSocket = do
   bind sock addr
 
   addrS <- getSocketName sock
-  putStrLn $ "New socket on: " ++ show addrS
   
   return $ UDPSock (sock,addrS)
 
 getSocket :: UDPSock -> Socket
 getSocket (UDPSock (sock,_)) = sock
+
+getSockAddr :: UDPSock -> SockAddr
+getSockAddr (UDPSock (_,ad)) = ad

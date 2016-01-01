@@ -26,17 +26,37 @@ commandLine = do
 
 process :: String -> Manager ()
 process cmd
-  | cmd == "direct" = do
-                      rt <- asks routingTable
-                      pp <- liftIO newUDPSocket
-                      let sock = getSocket pp
-                      newConn <- tryM (newUDPconn pp) :: Manager (Either SomeException (TQueue B.ByteString, UDPConn, Addr, Addr))
-                      liftIO $ case newConn of
-                                    Left err -> putStrLn "New connection failed:" >> (putStrLn $ show err) >> close sock
-                                    Right (q, _, !vad, !corad) -> newRoute rt vad (corad, q) >> putStrLn "New route added."
+  | cmd == "direct" = direct
   | otherwise = liftIO $ putStrLn $ "Invalid command: " ++ cmd
+  where
 
-newUDPconn :: UDPSock -> Manager (TQueue B.ByteString, UDPConn, Addr, Addr)
+    -- direct creates a new direct (unencrypted)
+    -- connection between two addresses.
+    direct :: Manager ()
+    direct = do
+      rt <- asks routingTable
+      maskManager $ \restore -> do
+        pp <- liftIO newUDPSocket
+        
+        let sock = getSocket pp
+            sockaddr = getSockAddr pp
+
+        -- Report the address of the new socket
+        liftIO $ putStrLn $ "New socket on: " ++ show sockaddr
+      
+        newConn <- tryManager (restore $ newUDPconn pp) :: Manager (Either SomeException (TQueue B.ByteString, Addr, Addr))
+      
+        liftIO $ case newConn of
+          Left err -> do
+            putStrLn "New direct connection failed:"
+            putStrLn $ show err
+            close sock
+          Right (q, !vad, !corad) -> do
+            newRoute rt vad (corad, q)
+            putStrLn "New route added."
+        
+
+newUDPconn :: UDPSock -> Manager (TQueue B.ByteString, Addr, Addr)
 newUDPconn pp = do
   injIO <- asks ( getInjectionQueue . routingTable )  -- asks ... returns an IO action to get the injector queue
   liftIO $ do
@@ -48,9 +68,9 @@ newUDPconn pp = do
 
     udpp <- sockToConn pp (cor,corP)
     outstream <- makeRelay udpp inj
-    return $ (outstream, udpp, vad, corad)
+    return $ (outstream, vad, corad)
   where
     prompt :: String -> IO String
     prompt pr = do
-      putStrLn $ pr ++":"
+      putStrLn $ pr ++" :>"
       getLine
