@@ -1,6 +1,8 @@
 module Relay.Relay
 ( makeRelay ) where
 
+import ProcUnit
+  
 import Relay.Connection
 
 import Control.Monad
@@ -15,12 +17,12 @@ import qualified Data.ByteString as B
 -- returns a TQueue one which to place outgoing packets. The connection
 -- is closed in the event of an exception, or the failure of one of the
 -- send or receive threads.
-makeRelay :: (Connection a) =>  a -> TQueue B.ByteString -> IO (TQueue B.ByteString)
-makeRelay con inbound = do
+makeRelay :: (Connection a) =>  a -> ProcUnit B.ByteString () -> IO (TQueue B.ByteString)
+makeRelay con injector = do
   outbound <- newTQueueIO
   -- Note, three threads per connection, one of which
   -- does very little. Reduce to two?
-  forkFinally (race_ (outbound `outOn` con) (inbound `inFrom` con)) (\_ -> closeConn con)
+  forkFinally (race_ (outbound `outOn` con) (injector `inFrom` con)) (\_ -> closeConn con)
   return outbound
   where
     
@@ -29,8 +31,8 @@ makeRelay con inbound = do
       bs <- atomically $ readTQueue q
       bs `sendOn` conn
 
-    inFrom :: (Connection a) => TQueue B.ByteString -> a -> IO ()
-    inFrom q conn = forever $ do
+    inFrom :: (Connection a) => ProcUnit B.ByteString () -> a -> IO ()
+    inFrom injector conn = forever $ do
       bs <- receiveOn conn
-      atomically $ writeTQueue q bs
+      bs `passTo` injector
                     

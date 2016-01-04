@@ -58,16 +58,15 @@ process cmd
 
 newUDPconn :: UDPSock -> Manager (TQueue B.ByteString, Addr, Addr)
 newUDPconn pp = do
-  injIO <- asks ( getInjectionQueue . routingTable )  -- asks ... returns an IO action to get the injector queue
+  injector <- asks ( getInjector . routingTable )  -- asks ... returns an IO action to get the injector ProcUnit
   liftIO $ do
-    inj <- injIO
     [cor,corP,vadd] <- sequence $ fmap prompt ["Correspondance IP:","Port","Register at"]
 
     corad <- (readM cor :: IO Addr)
     vad <- (readM vadd :: IO Addr)
 
     udpp <- sockToConn pp (cor,corP)
-    outstream <- makeRelay udpp inj
+    outstream <- makeRelay udpp injector
     return $ (outstream, vad, corad)
   where
     prompt :: String -> IO String

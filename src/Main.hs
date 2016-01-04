@@ -12,6 +12,7 @@ import Routing.PacketParsing.Ether
 import Relay.Relay
 import Relay.Debug
 
+import ProcUnit
 import Command
 import Environments
 
@@ -28,27 +29,20 @@ main :: IO ()
 main = do
   -- First lets deal with the command line arguments
   [device, myip] <- getArgs
-  
-  (routeChan, rt) <- makeRouter
-
-  --q <- newQueueAndReader (\bs -> putStrLn.show $ parseIP4 bs)
 
   tun <- openTUN device
-  createRoutingTable rt myip tun
-  onTT tun (\bs -> bs `routeTo` routeChan)
+  
+  injector <- procUnit (\bs -> do
+                          putStrLn.show $ parseIP4 bs
+                          writeTT tun bs )
+
+  (router, rt) <- makeRouter injector
+  rt `setAddr` (addr myip)
+  
+  onTT tun (\bs -> bs `passTo` router)
 
   -- Start a command line
   let env = Environment rt
   commandLine `manageWith` env
   closeTT tun
-  return ()
-
--- Test function, building a basic routing table
-createRoutingTable :: RoutingTable -> String -> TunTap -> IO ()
-createRoutingTable rt ip tt = do
-  rt `setAddr` (addr ip)
-  inj <- getInjectionQueue rt
-  makeQueueReader inj (\bs -> do
-                          putStrLn.show $ parseIP4 bs
-                          writeTT tt bs )
   return ()

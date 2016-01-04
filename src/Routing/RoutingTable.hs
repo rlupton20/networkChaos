@@ -1,12 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
 module Routing.RoutingTable
 ( RoutingTable
+, Injector
 , newRoutingTable
 , setAddr
 , newRoute
 , delRouteFor
 , getDirectionWith
-, getInjectionQueue ) where
+, getInjector ) where
 
 import Routing.PacketParsing.IP4
 
@@ -19,15 +20,17 @@ import Net.IPv4 (Addr)
 import qualified Data.Map as M
 import qualified Data.ByteString as B
 
+import ProcUnit
+
+type Injector = ProcUnit B.ByteString ()
+
 data RoutingTable = RT { ipadd :: (TVar Addr)
-                       , inject :: TVar (TQueue B.ByteString)
+                       , inject :: Injector
                        , table :: TVar (M.Map Addr (Addr, TQueue B.ByteString))}
 
-newRoutingTable :: IO RoutingTable
-newRoutingTable = do
+newRoutingTable :: Injector -> IO RoutingTable
+newRoutingTable inj = do
   ipadd <- newTVarIO $ addr "0.0.0.0"
-  injq <- newTQueueIO
-  inj <- newTVarIO injq
   tab <- newTVarIO $ M.empty
   let rT = (RT ipadd inj tab)
   return rT
@@ -50,5 +53,5 @@ getDirectionWithSTM dest RT{..} = do
 getDirectionWith :: Addr -> RoutingTable -> IO (Maybe (Addr, TQueue B.ByteString))
 getDirectionWith ad rt = atomically $ getDirectionWithSTM ad rt
 
-getInjectionQueue :: RoutingTable -> IO (TQueue B.ByteString)
-getInjectionQueue RT{..} = atomically $ readTVar inject
+getInjector :: RoutingTable -> Injector
+getInjector RT{..} = inject
