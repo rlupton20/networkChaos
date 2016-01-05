@@ -25,8 +25,7 @@ instance Connection UDPConn where
     return message
     
   sendOn str (UDPConn (sock, _) corr) = do
-    sent <- sendTo sock str corr
-    putStrLn $ show sent ++ " bytes sent"
+    sendTo sock str corr
     return ()
     
   closeConn (UDPConn (sock,_) _) = do
