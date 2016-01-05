@@ -9,6 +9,9 @@
 # Compiled file
 /src/Main
 
+# Profiling files
+*.prof
+
 # Cabal sandboxes
 /.cabal-sandbox/*
 cabal.sandbox.config
