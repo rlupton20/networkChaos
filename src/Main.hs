@@ -13,16 +13,16 @@ import Relay.Relay
 import Relay.Debug
 
 import ProcUnit
+import Types
 import Command
 import Environments
 
 import System.Environment
 
 -- Only needed when setting up router
-import Routing.PacketParsing.IP4 (addr, parseIP4)
+import Routing.PacketParsing.IP4 (parseIP4)
 import Control.Concurrent.STM.TQueue
 import qualified Data.ByteString as B
-import Debug.QueueReader (makeQueueReader, newQueueAndReader)
 -- End temporary section
 
 main :: IO ()
@@ -37,7 +37,9 @@ main = do
                           writeTT tun bs )
 
   (router, rt) <- makeRouter injector
-  rt `setAddr` (addr myip)
+  
+  myad <- addr "10.0.0.1"--myip
+  rt `setAddr` myad
   
   onTT tun (\bs -> bs `passTo` router)
 

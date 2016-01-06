@@ -4,7 +4,8 @@ module Command
 
 import Environments
 import Control.Monad.IO.Class
-import Utils
+--import Utils
+import Types
   
 import Routing.RoutingTable
 import Relay.Relay
@@ -12,10 +13,9 @@ import Relay.Interface
 
 import Control.Concurrent.STM.TQueue
 
-import Control.Exception
+import Control.Exception (SomeException)
 
 import Network.Socket
-import Net.IPv4 (Addr)
 
 import qualified Data.ByteString as B
 
@@ -62,8 +62,8 @@ newUDPconn pp = do
   liftIO $ do
     [cor,corP,vadd] <- sequence $ fmap prompt ["Correspondance IP:","Port","Register at"]
 
-    corad <- (readM cor :: IO Addr)
-    vad <- (readM vadd :: IO Addr)
+    corad <- addr cor --(readM cor :: IO Addr)
+    vad <- addr vadd --(readM vadd :: IO Addr)
 
     udpp <- sockToConn pp (cor,corP)
     outstream <- makeRelay udpp injector

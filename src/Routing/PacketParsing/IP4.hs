@@ -5,7 +5,6 @@ module Routing.PacketParsing.IP4
 , setSource
 , getDest
 , setDest
-, addr
 , toBytes )
 where
 
@@ -30,10 +29,6 @@ getDest = dest
 
 setDest :: Net.IPv4.Packet InPacket -> Addr -> Net.IPv4.Packet InPacket
 setDest pck ad = let !rpck = pck { dest = ad } in rpck
-
--- Utility function for reading strings into Addr
-addr :: String -> Addr
-addr = read
 
 toBytes :: Net.IPv4.Packet InPacket -> B.ByteString
 toBytes pck = let !bs = (B.pack . outBytes $ doUnparse pck) in bs

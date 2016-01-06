@@ -1,42 +1,45 @@
 {-# LANGUAGE BangPatterns #-}
 module Routing.Routing
-( makeRouter
-, routeTo ) where
-
-import Routing.RoutingTable
-import Routing.PacketParsing.IP4
+( makeRouter ) where
 
 import ProcUnit
+import Types
+  
+import Routing.RoutingTable
+
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TQueue
 
 import qualified Data.ByteString as B
-import Control.Concurrent
-import Control.Concurrent.STM
-import Control.Concurrent.STM.TQueue
-import Control.Monad
 
-makeRouter :: ProcUnit B.ByteString () -> IO (ProcUnit B.ByteString (), RoutingTable)
+-- |Takes an injection ProcUnit (Injector), and launches a new
+-- routing ProcUnit, after creating a new routing table which it
+-- uses. The routing table is also returned.
+makeRouter :: Injector -> IO (ProcUnit B.ByteString (), RoutingTable)
 makeRouter inj = do
   table <- newRoutingTable inj
   router <- procUnit (\x -> x `routeWith` table)
   return (router, table)
 
-routeTo :: a -> (TQueue a) -> IO ()
-routeTo x xq = atomically $ writeTQueue xq x
-
--- routeWith takes a TQueue of packets, and a RoutingTable,
--- and puts each packet on the correct exit queue
+-- |routeWith takes a packet in the form of a ByteString, and
+-- sends it to the approprtiate thread for forwarding, using
+-- the RoutingTable for lookup.
 routeWith :: B.ByteString -> RoutingTable -> IO ()
 routeWith bs rt = do
-  let mppck = parseIP4 bs
-  case mppck of
-    Just ppck -> do
-      redir <- lookup ppck
-      case redir of
-        Just rchan -> atomically $ writeTQueue rchan bs
-        Nothing -> return ()
+  redir <- lookup bs
+  case redir of
+    Just rchan -> atomically $ writeTQueue rchan bs
     Nothing -> return ()
   where
-    lookup ppck = do
-      let dest = getDest ppck
+    lookup :: B.ByteString -> IO (Maybe (TQueue B.ByteString))
+    lookup bs = do
+      let dest = getDest bs
       redirect <- dest `getDirectionWith` rt
       return $ fmap snd redirect
+
+    getDest :: B.ByteString -> Addr
+    getDest bs = let !a = bs `B.index` 16
+                     !b = bs `B.index` 17
+                     !c = bs `B.index` 18
+                     !d = bs `B.index` 19 in
+                 addrW8 a b c d

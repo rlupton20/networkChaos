@@ -9,20 +9,14 @@ module Routing.RoutingTable
 , getDirectionWith
 , getInjector ) where
 
-import Routing.PacketParsing.IP4
+import Types
 
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM.TQueue
 
-import Net.IPv4 (Addr)
-
 import qualified Data.Map as M
 import qualified Data.ByteString as B
-
-import ProcUnit
-
-type Injector = ProcUnit B.ByteString ()
 
 data RoutingTable = RT { ipadd :: (TVar Addr)
                        , inject :: Injector
@@ -30,7 +24,7 @@ data RoutingTable = RT { ipadd :: (TVar Addr)
 
 newRoutingTable :: Injector -> IO RoutingTable
 newRoutingTable inj = do
-  ipadd <- newTVarIO $ addr "0.0.0.0"
+  ipadd <- newTVarIO $ addrW8 0 0 0 0
   tab <- newTVarIO $ M.empty
   let rT = (RT ipadd inj tab)
   return rT
