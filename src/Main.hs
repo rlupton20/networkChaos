@@ -38,7 +38,7 @@ main = do
 
   (router, rt) <- makeRouter injector
   
-  myad <- addr "10.0.0.1"--myip
+  myad <- addr myip
   rt `setAddr` myad
   
   onTT tun (\bs -> bs `passTo` router)
