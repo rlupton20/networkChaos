@@ -38,8 +38,9 @@ maskReaderT outline = do
   env <- ask
   liftIO $ mask $ \restore -> do
     let restoreM = \toUnmask -> do
-          -- Since restore may be used inside local, we should ask
-          -- for the environment every time we want to restore
+          -- Since restore may be used inside local (or similar),
+          -- we should ask for the environment every time we want
+          -- to restore.
           locenv <- ask
           liftIO . restore $ (runReaderT toUnmask locenv)
           

@@ -4,10 +4,11 @@ module Network.TunTap
 , TTType(..)
 , noPI
 , TunTap
-, openTUN
 , closeTT
 , readTT
-, writeTT ) where
+, writeTT
+, openTUN
+, withTUN ) where
 
 import Foreign
 import Foreign.C.Types
@@ -22,6 +23,8 @@ import System.Posix.Types
 import System.Posix.IO (closeFd)
 import "unix-bytestring" System.Posix.IO.ByteString
 import qualified Data.ByteString as B
+
+import Control.Exception (bracket)
 
 data TTType = TUN | TAP deriving (Show, Eq)
 type TTFlag = CInt
@@ -93,3 +96,6 @@ openTUN :: String -> IO TunTap
 openTUN name = do
     (fd, asname) <- openTunTap TUN name [noPI]
     return $ TunTap asname TUN fd
+
+withTUN :: String -> (TunTap -> IO ()) -> IO ()
+withTUN dev action = bracket (openTUN dev) closeTT action

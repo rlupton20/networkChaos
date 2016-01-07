@@ -3,8 +3,6 @@ module Command
 ( commandLine ) where
 
 import Environments
-import Control.Monad.IO.Class
---import Utils
 import Types
   
 import Routing.RoutingTable
@@ -12,7 +10,7 @@ import Relay.Relay
 import Relay.Interface
 
 import Control.Concurrent.STM.TQueue
-
+import Control.Monad.IO.Class (liftIO)
 import Control.Exception (SomeException)
 
 import Network.Socket
@@ -60,7 +58,7 @@ newUDPconn :: UDPSock -> Manager (TQueue B.ByteString, Addr, Addr)
 newUDPconn pp = do
   injector <- asks ( getInjector . routingTable )
   liftIO $ do
-    [cor,corP,vadd] <- sequence $ fmap prompt ["Correspondance IP:","Port","Register at"]
+    [cor,corP,vadd] <- sequence $ fmap prompt ["Correspondance IP","Port","Register at"]
 
     -- Convert input strings into Addrs
     corad <- addr cor
@@ -72,5 +70,5 @@ newUDPconn pp = do
   where
     prompt :: String -> IO String
     prompt pr = do
-      putStrLn $ pr ++">>"
+      putStrLn $ pr ++" >>"
       getLine
