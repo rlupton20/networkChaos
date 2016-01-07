@@ -14,9 +14,8 @@ import qualified Data.ByteString as B
 
 -- |Addr is a type for holding IP addresses. It is the same as the
 -- type from network-house (note, the Show and Read instances are
--- different). The dependency on network-house is being removed, since
--- more speed is needed and the full parsing power isn't required.
-data Addr = Addr !Word8 !Word8 !Word8 !Word8 deriving (Eq, Ord, Show, Read)
+-- different).
+data Addr = Addr {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 deriving (Eq, Ord, Show, Read)
 
 -- |addr takes a String and (tries) to convert it into an Addr
 -- inside a Monad.
