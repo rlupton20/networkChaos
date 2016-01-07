@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module Routing.PacketParsing.IP4
+module Debug.PacketParsing.IP4
 ( parseIP4
 , getSource
 , setSource
@@ -8,7 +8,7 @@ module Routing.PacketParsing.IP4
 , toBytes )
 where
 
-import Routing.PacketParsing.Parsing
+import Debug.PacketParsing.Parsing
 
 import qualified Data.ByteString as B
 import Net.Packet

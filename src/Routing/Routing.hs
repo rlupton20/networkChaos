@@ -38,8 +38,8 @@ routeWith bs rt = do
       return $ fmap snd redirect
 
     getDest :: B.ByteString -> Addr
-    getDest bs = let !a = bs `B.index` 16
-                     !b = bs `B.index` 17
-                     !c = bs `B.index` 18
-                     !d = bs `B.index` 19 in
+    getDest bs = let a = bs `B.index` 16
+                     b = bs `B.index` 17
+                     c = bs `B.index` 18
+                     d = bs `B.index` 19 in
                  addrW8 a b c d

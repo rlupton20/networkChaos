@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module Routing.PacketParsing.Ether
+module Debug.PacketParsing.Ether
 ( stripEther
 , makeEtherStripper ) where
 
@@ -14,7 +14,7 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TQueue
 
-import Routing.PacketParsing.Parsing
+import Debug.PacketParsing.Parsing
 
 -- The ethernet header is 14 bytes long so just drop it to get contents
 -- WARNING: Different header types may cause problems, so if this

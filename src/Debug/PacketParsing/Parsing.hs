@@ -1,4 +1,4 @@
-module Routing.PacketParsing.Parsing
+module Debug.PacketParsing.Parsing
 ( restruct ) where
 
 import Net.Packet

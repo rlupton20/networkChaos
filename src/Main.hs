@@ -4,7 +4,6 @@ import Network.TunTap
 
 import Routing.Routing
 import Routing.RoutingTable
-import Routing.PacketParsing.Ether
 
 import Relay.Relay
 import Relay.Debug
@@ -21,7 +20,7 @@ import Control.Monad
 import Control.Exception
 
 -- Only needed when setting up router
-import Routing.PacketParsing.IP4 (parseIP4)
+import Debug.PacketParsing.IP4 (parseIP4)
 -- End temporary section
 
 main :: IO ()
