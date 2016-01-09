@@ -43,7 +43,7 @@ main = do
       rethrowException
 
     -- Start a command line
-    let env = Environment rt
+    env <- makeEnvironmentWith rt
     commandLine `manageWith` env
 
   return ()

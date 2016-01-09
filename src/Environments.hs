@@ -1,19 +1,28 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 module Environments
 ( Environment(..)
+, makeEnvironmentWith
 , Manager
 , manageWith
+, ask
 , asks
 , tryManager
 , maskManager ) where
 
 import Routing.RoutingTable
+import Command.Types
 
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
 
-data Environment = Environment { routingTable :: RoutingTable }
+data Environment = Environment { routingTable :: RoutingTable
+                               , commandQueue :: CommandQueue }
+
+makeEnvironmentWith :: RoutingTable -> IO Environment
+makeEnvironmentWith rt = do
+  cq <- newCommandQueue
+  return $ Environment rt cq
 
 type Manager = ReaderT Environment IO
 
@@ -49,3 +58,5 @@ maskReaderT outline = do
 -- |maskManager gives us masking in the Manager monad.
 maskManager :: ((forall a . Manager a -> Manager a) -> Manager b) -> Manager b
 maskManager = maskReaderT
+
+

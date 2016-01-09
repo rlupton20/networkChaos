@@ -4,10 +4,13 @@ module Command
 
 import Environments
 import Types
+import Utils
   
 import Routing.RoutingTable
 import Relay.Relay
 import Relay.Interface
+
+import Command.Types
 
 import Control.Concurrent.STM.TQueue
 import Control.Monad.IO.Class (liftIO)
@@ -16,6 +19,23 @@ import Control.Exception (SomeException)
 import Network.Socket
 
 import qualified Data.ByteString as B
+
+commander :: Manager ()
+commander = do
+  cq <- asks (commandQueue)
+  cmd <- liftIO $ getCommand cq
+  if cmd == Quit then return () else process' cmd >> commander
+
+process' :: Command -> Manager ()
+process' dc@(DirectConnection _ _ _ _) = do
+  env <- ask
+  liftIO $ bracketFork (newUDPSocket) (close.getSocket) $ \udpsock ->
+    ( (dc `directWith` udpsock) `manageWith` env )
+  return ()
+process' _ = liftIO $ error "Invalid command reached processor."
+
+directWith :: Command -> UDPSock -> Manager ()
+directWith (DirectConnection sp ca cp va) updsock = undefined
 
 commandLine :: Manager ()
 commandLine = do

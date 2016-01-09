@@ -9,11 +9,11 @@ cd ..
 
 cd Routing
 rm *.o *.hi
-cd PacketParsing
-rm *.o *.hi
-cd ..
 cd ..
 
 cd Debug
 rm *.o *.hi
+cd PacketParsing
+rm *.o *.hi
+cd ..
 cd ..
