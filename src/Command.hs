@@ -63,14 +63,3 @@ direct (DirectConnection sp ca cp va) = do
       va <- addr vas
       udpconn <- sockToConn udp (cas,cps)
       return (udpconn, ca, va)
-      
-      
-{-
-newUDPconn :: UDPSock -> Manager (TQueue B.ByteString, Addr, Addr)
-newUDPconn pp = do
-  injector <- asks ( getInjector . routingTable )
-  liftIO $ do
-
-    udpp <- sockToConn pp (cor,corP)
-    outstream <- makeRelay udpp injector
--}

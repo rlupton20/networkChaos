@@ -119,3 +119,11 @@ http://blog.bjrn.se/2008/09/speeding-up-haskell-with-c-very-short.html
 * MTU
 Don't want incoming packets (to be routed) to be too large to tunnel.
 If the TUN devices MTU (Maximum Transmission Unit) is set low enough, then enough room should be preserved to add a header and send it.
+* January 2016 todo list
+** TODO Make ProcUnit exception safe
+Wrapping Async might be the best way
+** TODO Make Manager spawn exception safe threads
+This can't use async (at least not in the same way). We don't want the program to suffer from these threads failing, but we want a clean shutdown, and consistent spawn list.
+** TODO Tidy and check overall excpetion safety
+Probably will follow from the above.
+
