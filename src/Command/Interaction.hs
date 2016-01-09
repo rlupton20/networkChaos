@@ -1,25 +1,31 @@
 module Command.Interaction where
 
+import Command.CliTypes
 import Command.Types
+
+import Control.Monad.Trans.Reader
+import Control.Monad.IO.Class
 
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TMVar
 
-direct :: CommandQueue -> IO ()
-direct cq = do
-  pn <- newEmptyTMVarIO
-  ca <- newEmptyTMVarIO
-  cp <- newEmptyTMVarIO
-  va <- newEmptyTMVarIO
+direct :: CLI ()
+direct = do
+  post <- asks (sendCommand)
+  liftIO $ do
+    pn <- newEmptyTMVarIO
+    ca <- newEmptyTMVarIO
+    cp <- newEmptyTMVarIO
+    va <- newEmptyTMVarIO
 
-  postCommand cq $ DirectConnection pn ca cp va
+    post $ DirectConnection pn ca cp va
 
-  portNum <- atomically $ takeTMVar pn
-  tell $ "Connection on port " ++ (show portNum)
+    portNum <- atomically $ takeTMVar pn
+    tell $ "Connection on port " ++ (show portNum)
 
-  ask "IP address:" ca
-  ask "Port Number:" cp
-  ask "Register at:" va
+    ask "IP address:" ca
+    ask "Port Number:" cp
+    ask "Register at:" va
   where
     
     tell = putStrLn

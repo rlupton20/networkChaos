@@ -17,13 +17,9 @@ import qualified Data.ByteString as B
 -- returns a TQueue one which to place outgoing packets. The connection
 -- is closed in the event of an exception, or the failure of one of the
 -- send or receive threads.
-makeRelay :: (Connection a) =>  a -> ProcUnit B.ByteString () -> IO (TQueue B.ByteString)
-makeRelay con injector = do
-  outbound <- newTQueueIO
-  -- Note, three threads per connection, one of which
-  -- does very little. Reduce to two?
-  forkFinally (race_ (outbound `outOn` con) (injector `inFrom` con)) (\_ -> closeConn con)
-  return outbound
+makeRelay :: (Connection a) =>  a -> ProcUnit B.ByteString () -> TQueue B.ByteString ->  IO ()
+makeRelay con injector outbound = do
+  race_ (outbound `outOn` con) (injector `inFrom` con)
   where
     
     outOn :: (Connection a) => TQueue B.ByteString -> a -> IO ()

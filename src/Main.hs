@@ -11,8 +11,13 @@ import Relay.Debug
 import Types
 import Utils
 import ProcUnit
+
 import Command
-import Environments
+import Manager
+
+import Command.Types
+import Command.CliTypes
+import Command.CommandLine
 
 import Control.Concurrent
 import System.Environment
@@ -29,21 +34,28 @@ main = do
   [device, myip] <- getArgs
 
   withTUN device $ \tun -> do
+    -- The following doesn't receive exceptions etc.
     injector <- procUnit (\bs -> do
                           putStrLn.show $ parseIP4 bs
                           writeTT tun bs )
 
+    -- The router ProcUnit is also not safe under exceptions
     (router, rt) <- makeRouter injector
   
     myad <- addr myip
     rt `setAddr` myad
 
-    forkFinally
+    -- The following needs to be made to receive exceptions
+    -- from the main thread.
+    forkIO
       (forever $ do readTT tun >>= \bs -> bs `passTo` router)
-      rethrowException
 
     -- Start a command line
-    env <- makeEnvironmentWith rt
-    commandLine `manageWith` env
+    env <- makeManaged rt
+    forkIO $ commander `manageWith` env
+
+    let cq = commandQueue env
+        post = postCommand cq
+    runCli commandLine $ CliComm post
 
   return ()

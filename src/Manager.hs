@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes #-}
-module Environments
-( Environment(..)
-, makeEnvironmentWith
+module Manager
+( Managed(..)
+, makeManaged
 , Manager
 , manageWith
 , ask
@@ -12,21 +12,25 @@ module Environments
 import Routing.RoutingTable
 import Command.Types
 
+import Control.Concurrent
+import Control.Concurrent.STM.TVar
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
 
-data Environment = Environment { routingTable :: RoutingTable
-                               , commandQueue :: CommandQueue }
+data Managed = Managed { routingTable :: RoutingTable
+                       , commandQueue :: CommandQueue
+                       , spawned :: TVar [ThreadId] }
 
-makeEnvironmentWith :: RoutingTable -> IO Environment
-makeEnvironmentWith rt = do
+makeManaged :: RoutingTable -> IO Managed
+makeManaged rt = do
   cq <- newCommandQueue
-  return $ Environment rt cq
+  spwn <- newTVarIO []
+  return $ Managed rt cq spwn
 
-type Manager = ReaderT Environment IO
+type Manager = ReaderT Managed IO
 
-manageWith :: Manager a -> Environment -> IO a
+manageWith :: Manager a -> Managed -> IO a
 manageWith m env = runReaderT m $ env
 
 -- |tryReaderT is the try exception handler lifted to transformed

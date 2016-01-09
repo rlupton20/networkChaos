@@ -1,8 +1,8 @@
 {-# LANGUAGE BangPatterns #-}
 module Command
-( commandLine ) where
+( commander ) where
 
-import Environments
+import Manager
 import Types
 import Utils
   
@@ -12,9 +12,12 @@ import Relay.Interface
 
 import Command.Types
 
+import Control.Concurrent
+import Control.Concurrent.STM
+import Control.Concurrent.STM.TMVar
 import Control.Concurrent.STM.TQueue
 import Control.Monad.IO.Class (liftIO)
-import Control.Exception (SomeException)
+import Control.Exception
 
 import Network.Socket
 
@@ -24,71 +27,50 @@ commander :: Manager ()
 commander = do
   cq <- asks (commandQueue)
   cmd <- liftIO $ getCommand cq
-  if cmd == Quit then return () else process' cmd >> commander
+  if cmd == Quit then return () else process cmd >> commander
 
-process' :: Command -> Manager ()
-process' dc@(DirectConnection _ _ _ _) = do
-  env <- ask
-  liftIO $ bracketFork (newUDPSocket) (close.getSocket) $ \udpsock ->
-    ( (dc `directWith` udpsock) `manageWith` env )
-  return ()
-process' _ = liftIO $ error "Invalid command reached processor."
+-- Need to keep track of spawned threads, and make exception safe
+process :: Command -> Manager ()
+process dc@(DirectConnection _ _ _ _) = ask >>= \env -> liftIO $ forkIO ((direct dc) `manageWith` env) >> return ()
+process _ = liftIO $ error "Invalid command reached processor."
 
-directWith :: Command -> UDPSock -> Manager ()
-directWith (DirectConnection sp ca cp va) updsock = undefined
+direct :: Command -> Manager ()
+direct (DirectConnection sp ca cp va) = do
+  rt <- asks (routingTable)
+  let inj = getInjector rt
+  liftIO $ do
+    bracket (newUDPSocket) (close.getSocket) $ \udpsock -> do
+      
+      pn <- socketPort.getSocket $ udpsock
+      atomically.(putTMVar sp) $ fromIntegral pn
+      [cas,cps,vas] <- sequence $ map (atomically.takeTMVar) [ca,cp,va]
+      
+      resolve <- try $ makeConn udpsock cas cps vas :: IO (Either SomeException (UDPConn, Addr, Addr))
 
-commandLine :: Manager ()
-commandLine = do
-  cmd <- liftIO $ getLine
-  if cmd == "quit" then return () else process cmd >> commandLine
+      case resolve of
+        Left _ -> putStrLn "Error with input."
+        Right (udpc, cad, vad) -> do
+          out <- newTQueueIO
+          bracket (newRoute rt vad (cad, out))
+                  (\_ -> delRouteFor rt vad)
+                  (\_ -> makeRelay udpc inj out)
+      return ()
 
-process :: String -> Manager ()
-process cmd
-  | cmd == "direct" = direct
-  | otherwise = liftIO $ putStrLn $ "Invalid command: " ++ cmd
   where
-
-    -- direct creates a new direct (unencrypted)
-    -- connection between two addresses.
-    direct :: Manager ()
-    direct = do
-      rt <- asks routingTable
-      maskManager $ \restore -> do
-        pp <- liftIO newUDPSocket
-        
-        let sock = getSocket pp
-            sockaddr = getSockAddr pp
-
-        -- Report the address of the new socket
-        liftIO $ putStrLn $ "New socket on: " ++ show sockaddr
+    makeConn :: UDPSock -> String -> String -> String -> IO (UDPConn, Addr, Addr)
+    makeConn udp cas cps vas = do
+      ca <- addr cas
+      va <- addr vas
+      udpconn <- sockToConn udp (cas,cps)
+      return (udpconn, ca, va)
       
-        newConn <- tryManager (restore $ newUDPconn pp) :: Manager (Either SomeException (TQueue B.ByteString, Addr, Addr))
       
-        liftIO $ case newConn of
-          Left err -> do
-            putStrLn "New direct connection failed:"
-            putStrLn $ show err
-            close sock
-          Right (q, !vad, !corad) -> do
-            newRoute rt vad (corad, q)
-            putStrLn "New route added."
-        
-
+{-
 newUDPconn :: UDPSock -> Manager (TQueue B.ByteString, Addr, Addr)
 newUDPconn pp = do
   injector <- asks ( getInjector . routingTable )
   liftIO $ do
-    [cor,corP,vadd] <- sequence $ fmap prompt ["Correspondance IP","Port","Register at"]
-
-    -- Convert input strings into Addrs
-    corad <- addr cor
-    vad <- addr vadd
 
     udpp <- sockToConn pp (cor,corP)
     outstream <- makeRelay udpp injector
-    return $ (outstream, vad, corad)
-  where
-    prompt :: String -> IO String
-    prompt pr = do
-      putStrLn $ pr ++" >>"
-      getLine
+-}
