@@ -3,6 +3,7 @@ module Types
 ( Addr
 , addr
 , addrW8
+, Packet
 , Worker
 , Injector ) where
 
@@ -31,7 +32,9 @@ addr str = do
 addrW8 :: Word8 -> Word8 -> Word8 -> Word8 -> Addr
 addrW8 !a !b !c !d = Addr a b c d
 
+type Packet = B.ByteString
+
 -- |Injector is just a more descriptive name for the type which
 -- wraps a ProcUnit which puts packets (ByteStrings) back into
 -- a network device.
-type Injector = Worker B.ByteString
+type Injector = Worker Packet

@@ -33,44 +33,49 @@ main :: IO ()
 main = do
   -- First lets deal with the command line arguments
   [device, myip] <- getArgs
-
+  
   withTUN device $ \tun -> runStack (core tun myip)
+
 
 core :: TunTap -> String -> Stack ()
 core tt ip = do
-  -- First lets build an injector worker
-  injector <- liftIO $ newWorker $ \bs -> do
-    putStrLn.show $ parseIP4 bs
-    writeTT tt bs
-
+  injector <- specInjector tt
   register $ build injector
 
-  -- Build the router
-  (router, rt) <- liftIO $ do
-    (route, rt) <- makeRouter injector
-    router <- newWorker route
-    -- Setup the routing table
-    myad <- addr ip
-    rt `setAddr` myad
-    return (router, rt)
-
+  (router, rt) <- specRouter injector ip
   register $ build router
   
-  -- makeWorkSourceOf
   -- Now we build the packet reader
   let reader = (readTT tt) `makeWorkSourceOf` router
-
   register $ blocksInForeign (build reader)
 
   -- Now we build the management system
-  (manager, env) <- liftIO $ do
-    env <- makeManaged rt
-    return $ (commander `manageWith` env, env)
-
+  (manager, env) <- specManager rt
   register manager
 
+  -- Lastly we start the command line
   let cq = commandQueue env
       post = postCommand cq
-
   register $ (runCli commandLine $ CliComm post)
   
+  where
+
+    specInjector :: TunTap -> Stack Injector
+    specInjector tt = liftIO $ newWorker $ \bs -> do
+      putStrLn.show $ parseIP4 bs
+      writeTT tt bs
+
+    specRouter :: Injector -> String ->
+                   Stack (Worker Packet, RoutingTable)
+    specRouter injector ip = liftIO $ do
+      (route, rt) <- makeRouter injector
+      router <- newWorker route
+      -- Setup the routing table
+      myad <- addr ip
+      rt `setAddr` myad
+      return (router, rt)
+
+    specManager :: RoutingTable -> Stack (IO (), Managed)
+    specManager rt = liftIO $ do
+      env <- makeManaged rt
+      return $ (commander `manageWith` env, env)
