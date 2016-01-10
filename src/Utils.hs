@@ -1,7 +1,10 @@
 module Utils
-( readM ) where
+( readM
+, passWork ) where
 
 import Text.Read
+
+import Control.IO.Builder (passWork)
 
 import Control.Exception
 import Control.Concurrent

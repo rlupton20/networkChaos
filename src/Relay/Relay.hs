@@ -1,12 +1,12 @@
 module Relay.Relay
 ( makeRelay ) where
 
-import ProcUnit
+import Types
+import Utils (passWork)
   
 import Relay.Connection
 
 import Control.Monad
-import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TQueue
 import Control.Concurrent.Async
@@ -17,7 +17,7 @@ import qualified Data.ByteString as B
 -- returns a TQueue one which to place outgoing packets. The connection
 -- is closed in the event of an exception, or the failure of one of the
 -- send or receive threads.
-makeRelay :: (Connection a) =>  a -> ProcUnit B.ByteString () -> TQueue B.ByteString ->  IO ()
+makeRelay :: (Connection a) =>  a -> Injector -> TQueue B.ByteString ->  IO ()
 makeRelay con injector outbound = do
   race_ (outbound `outOn` con) (injector `inFrom` con)
   where
@@ -27,8 +27,8 @@ makeRelay con injector outbound = do
       bs <- atomically $ readTQueue q
       bs `sendOn` conn
 
-    inFrom :: (Connection a) => ProcUnit B.ByteString () -> a -> IO ()
+    inFrom :: (Connection a) => Injector -> a -> IO ()
     inFrom injector conn = forever $ do
       bs <- receiveOn conn
-      bs `passTo` injector
+      bs `passWork` injector
                     

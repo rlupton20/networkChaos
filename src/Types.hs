@@ -3,11 +3,11 @@ module Types
 ( Addr
 , addr
 , addrW8
-, ProcUnit
+, Worker
 , Injector ) where
 
 import Utils
-import ProcUnit
+import Control.IO.Builder
 
 import Data.Word
 import qualified Data.ByteString as B
@@ -34,4 +34,4 @@ addrW8 !a !b !c !d = Addr a b c d
 -- |Injector is just a more descriptive name for the type which
 -- wraps a ProcUnit which puts packets (ByteStrings) back into
 -- a network device.
-type Injector = ProcUnit B.ByteString ()
+type Injector = Worker B.ByteString
