@@ -16,11 +16,10 @@ import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM.TQueue
 
 import qualified Data.Map as M
-import qualified Data.ByteString as B
 
 data RoutingTable = RT { ipadd :: (TVar Addr)
                        , inject :: Injector
-                       , table :: TVar (M.Map Addr (Addr, TQueue B.ByteString))}
+                       , table :: TVar (M.Map Addr (Addr, TQueue Packet))}
 
 newRoutingTable :: Injector -> IO RoutingTable
 newRoutingTable inj = do
@@ -32,19 +31,19 @@ newRoutingTable inj = do
 setAddr :: RoutingTable -> Addr -> IO ()
 setAddr RT{..} ad = atomically $ writeTVar ipadd ad
 
-newRoute :: RoutingTable -> Addr -> (Addr, TQueue B.ByteString) -> IO ()
+newRoute :: RoutingTable -> Addr -> (Addr, TQueue Packet) -> IO ()
 newRoute RT{..} ad ent = atomically $ modifyTVar' table (M.insert ad ent)
 
 delRouteFor :: RoutingTable -> Addr -> IO ()
 delRouteFor RT{..} ad = atomically $ modifyTVar' table (M.delete ad)
   
-getDirectionWithSTM :: Addr -> RoutingTable -> STM (Maybe (Addr, TQueue B.ByteString))
+getDirectionWithSTM :: Addr -> RoutingTable -> STM (Maybe (Addr, TQueue Packet))
 getDirectionWithSTM dest RT{..} = do
   rt <- readTVar table
   let newdest = dest `M.lookup` rt 
   return newdest
 
-getDirectionWith :: Addr -> RoutingTable -> IO (Maybe (Addr, TQueue B.ByteString))
+getDirectionWith :: Addr -> RoutingTable -> IO (Maybe (Addr, TQueue Packet))
 getDirectionWith ad rt = atomically $ getDirectionWithSTM ad rt
 
 getInjector :: RoutingTable -> Injector

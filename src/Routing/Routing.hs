@@ -2,7 +2,6 @@
 module Routing.Routing
 ( makeRouter ) where
 
-import ProcUnit
 import Types
   
 import Routing.RoutingTable
@@ -15,7 +14,7 @@ import qualified Data.ByteString as B
 -- |Takes an injection ProcUnit (Injector), and launches a new
 -- routing ProcUnit, after creating a new routing table which it
 -- uses. The routing table is also returned.
-makeRouter :: Injector -> IO (B.ByteString -> IO (), RoutingTable)
+makeRouter :: Injector -> IO (Packet -> IO (), RoutingTable)
 makeRouter inj = do
   table <- newRoutingTable inj
   let route x = x `routeWith` table
@@ -24,20 +23,20 @@ makeRouter inj = do
 -- |routeWith takes a packet in the form of a ByteString, and
 -- sends it to the approprtiate thread for forwarding, using
 -- the RoutingTable for lookup.
-routeWith :: B.ByteString -> RoutingTable -> IO ()
+routeWith :: Packet -> RoutingTable -> IO ()
 routeWith bs rt = do
   redir <- lookup bs
   case redir of
     Just rchan -> atomically $ writeTQueue rchan bs
     Nothing -> return ()
   where
-    lookup :: B.ByteString -> IO (Maybe (TQueue B.ByteString))
+    lookup :: Packet -> IO (Maybe (TQueue B.ByteString))
     lookup bs = do
       let dest = getDest bs
       redirect <- dest `getDirectionWith` rt
       return $ fmap snd redirect
 
-    getDest :: B.ByteString -> Addr
+    getDest :: Packet -> Addr
     getDest bs = let a = bs `B.index` 16
                      b = bs `B.index` 17
                      c = bs `B.index` 18
