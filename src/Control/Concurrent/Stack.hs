@@ -25,9 +25,9 @@ buildStack :: Stack a -> IO ProcStack
 buildStack ls = execStateT ls []
 
 runStack :: Stack a -> IO ()
-runStack lstk = do
-  stck <- buildStack lstk
-  launchStack stck []
+runStack stck = do
+  ios <- buildStack stck
+  launchStack ios []
   where
     launchStack [] ws = waitAny ws >> return ()
     launchStack (s:ss) ws = withAsync s $ \w -> launchStack ss (w:ws)

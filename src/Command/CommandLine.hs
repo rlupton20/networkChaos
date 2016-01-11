@@ -1,4 +1,5 @@
-module Command.CommandLine where
+module Command.CommandLine
+( commandLine ) where
 
 import Command.CliTypes
 import Command.Interaction

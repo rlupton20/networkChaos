@@ -1,4 +1,5 @@
-module Command.Interaction where
+module Command.Interaction
+( direct ) where
 
 import Command.CliTypes
 import Command.Types

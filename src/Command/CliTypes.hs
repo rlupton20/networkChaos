@@ -1,4 +1,7 @@
-module Command.CliTypes where
+module Command.CliTypes
+( CliComm(..)
+, CLI
+, runCli ) where
 
 import Command.Types
 import Control.Monad.Trans.Reader
