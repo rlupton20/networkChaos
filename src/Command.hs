@@ -21,8 +21,6 @@ import Control.Exception
 
 import Network.Socket
 
-import qualified Data.ByteString as B
-
 commander :: Manager ()
 commander = do
   cq <- asks (commandQueue)
