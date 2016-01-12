@@ -15,6 +15,8 @@ import Command.Types
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TMVar
+import Control.Concurrent.Async
+
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
@@ -29,8 +31,7 @@ makeManaged rt = do
   cq <- newCommandQueue
   return $ Environment rt cq
 
-data SubManager = SubManager { subManagerThreadId :: ThreadId
-                             , waitPoint :: TMVar (Either SomeException ()) }
+data SubManager = SubManager { process :: Async ()}
 
 data ManageCtl = ManageCtl { submanagers :: TMVar (Maybe [SubManager]) }
 
@@ -39,7 +40,7 @@ type Manager = ReaderT Environment (ReaderT ManageCtl IO)
 manage :: Manager a -> Environment -> IO a
 manage m env = do
   subs <- newTMVarIO $ Just []
-  (runReaderT (runReaderT m $ env) $ (ManageCtl subs)) `finally`
+  (runReaderT (runReaderT m env) $ (ManageCtl subs)) `finally`
     killSubManagers subs
     
   where
@@ -48,7 +49,7 @@ manage m env = do
     killSubManagers subs = do
       submanagers <- getKillList subs
       sequence $ map kill submanagers
-      sequence $ map (atomically.takeTMVar.waitPoint) submanagers
+      sequence $ map (waitCatch.process) submanagers
       return ()
       
     getKillList :: TMVar (Maybe [SubManager]) -> IO [SubManager]
@@ -59,9 +60,19 @@ manage m env = do
         Nothing -> {- Already killed -} return []
 
     kill :: SubManager -> IO ()
-    kill SubManager{..} = throwTo subManagerThreadId ThreadKilled
+    kill SubManager{..} = cancel process
 
-                          
+{- modifySpawnList :: ([SubManager] -> [SubManager]) -> Manager () -}
+
+{- -}
+
+{-
+spawn :: Manager () -> Manager ThreadId
+spawn subman = do
+  env <- environment
+  t <- forkFinally (subman `manage` env) (\r -> do putTMVar r)
+-}  
+
 fromEnvironment :: (Environment -> a) -> Manager a
 fromEnvironment = asks
 
