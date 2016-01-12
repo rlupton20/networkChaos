@@ -23,18 +23,18 @@ import Network.Socket
 
 commander :: Manager ()
 commander = do
-  cq <- asks (commandQueue)
+  cq <- fromEnvironment (commandQueue)
   cmd <- liftIO $ getCommand cq
   if cmd == Quit then return () else process cmd >> commander
 
 -- Need to keep track of spawned threads, and make exception safe
 process :: Command -> Manager ()
-process dc@(DirectConnection _ _ _ _) = ask >>= \env -> liftIO $ forkIO ((direct dc) `manageWith` env) >> return ()
+process dc@(DirectConnection _ _ _ _) = environment >>= \env -> liftIO $ forkIO ((direct dc) `manage` env) >> return ()
 process _ = liftIO $ error "Invalid command reached processor."
 
 direct :: Command -> Manager ()
 direct (DirectConnection sp ca cp va) = do
-  rt <- asks (routingTable)
+  rt <- fromEnvironment (routingTable)
   let inj = getInjector rt
   liftIO $ do
     bracket (newUDPSocket) (close.getSocket) $ \udpsock -> do

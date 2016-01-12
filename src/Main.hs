@@ -36,7 +36,6 @@ main = do
   
   withTUN device $ \tun -> runStack (core tun myip)
 
-
 core :: TunTap -> String -> Stack ()
 core tt ip = do
   injector <- specInjector tt
@@ -75,7 +74,7 @@ core tt ip = do
       rt `setAddr` myad
       return (router, rt)
 
-    specManager :: RoutingTable -> Stack (IO (), Managed)
+    specManager :: RoutingTable -> Stack (IO (), Environment)
     specManager rt = liftIO $ do
       env <- makeManaged rt
-      return $ (commander `manageWith` env, env)
+      return $ (commander `manage` env, env)

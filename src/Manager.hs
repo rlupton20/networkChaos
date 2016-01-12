@@ -1,37 +1,77 @@
-{-# LANGUAGE ExistentialQuantification, RankNTypes #-}
+{-# LANGUAGE ExistentialQuantification, RankNTypes, RecordWildCards #-}
 module Manager
-( Managed(..)
+( Environment(..)
 , makeManaged
 , Manager
-, manageWith
-, ask
-, asks
-, tryManager
-, maskManager ) where
+, manage
+, environment
+, fromEnvironment
+{-, tryManager
+, maskManager-} ) where
 
 import Routing.RoutingTable
 import Command.Types
 
 import Control.Concurrent
-import Control.Concurrent.STM.TVar
+import Control.Concurrent.STM
+import Control.Concurrent.STM.TMVar
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
 
-data Managed = Managed { routingTable :: RoutingTable
-                       , commandQueue :: CommandQueue
-                       , spawned :: TVar [ThreadId] }
+import Control.Monad
 
-makeManaged :: RoutingTable -> IO Managed
+data Environment = Environment { routingTable :: RoutingTable
+                           , commandQueue :: CommandQueue }
+
+makeManaged :: RoutingTable -> IO Environment
 makeManaged rt = do
   cq <- newCommandQueue
-  spwn <- newTVarIO []
-  return $ Managed rt cq spwn
+  return $ Environment rt cq
 
-type Manager = ReaderT Managed IO
+data SubManager = SubManager { subManagerThreadId :: ThreadId
+                             , waitPoint :: TMVar (Either SomeException ()) }
 
-manageWith :: Manager a -> Managed -> IO a
-manageWith m env = runReaderT m $ env
+data ManageCtl = ManageCtl { submanagers :: TMVar (Maybe [SubManager]) }
+
+type Manager = ReaderT Environment (ReaderT ManageCtl IO)
+
+manage :: Manager a -> Environment -> IO a
+manage m env = do
+  subs <- newTMVarIO $ Just []
+  (runReaderT (runReaderT m $ env) $ (ManageCtl subs)) `finally`
+    killSubManagers subs
+    
+  where
+    
+    killSubManagers :: TMVar (Maybe [SubManager]) -> IO ()
+    killSubManagers subs = do
+      submanagers <- getKillList subs
+      sequence $ map kill submanagers
+      sequence $ map (atomically.takeTMVar.waitPoint) submanagers
+      return ()
+      
+    getKillList :: TMVar (Maybe [SubManager]) -> IO [SubManager]
+    getKillList subs = atomically $ do
+      msubs <- takeTMVar subs
+      case msubs of
+        Just toKill -> putTMVar subs Nothing >> return toKill
+        Nothing -> {- Already killed -} return []
+
+    kill :: SubManager -> IO ()
+    kill SubManager{..} = throwTo subManagerThreadId ThreadKilled
+
+                          
+fromEnvironment :: (Environment -> a) -> Manager a
+fromEnvironment = asks
+
+environment :: Manager Environment
+environment = ask
+
+-- Exception handling stuff currently unused, and blocked out
+-- for the moment --- it should be updated later
+
+{-
 
 -- |tryReaderT is the try exception handler lifted to transformed
 -- monads of type (ReaderT env IO a)
@@ -63,4 +103,4 @@ maskReaderT outline = do
 maskManager :: ((forall a . Manager a -> Manager a) -> Manager b) -> Manager b
 maskManager = maskReaderT
 
-
+-}

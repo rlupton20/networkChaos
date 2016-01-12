@@ -27,9 +27,14 @@ buildStack ls = execStateT ls []
 runStack :: Stack a -> IO ()
 runStack stck = do
   ios <- buildStack stck
-  launchStack ios []
+  rem <- launchStack ios []
+  -- Now we need to wait for all the exception handlers to run.
+  -- Note we don't want to rethrow exceptions (one exception in
+  -- Stack means shut down everything), so we just use waitCatch
+  sequence $ map waitCatch rem
+  return ()
   where
-    launchStack [] ws = waitAny ws >> return ()
+    launchStack [] ws = waitAny ws >> return ws
     launchStack (s:ss) ws = withAsync s $ \w -> launchStack ss (w:ws)
 
 blocksInForeign :: IO a -> IO a
