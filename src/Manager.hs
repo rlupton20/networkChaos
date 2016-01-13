@@ -32,9 +32,7 @@ makeManaged rt = do
   return $ Environment rt cq
 
 data SubManager = SubManager { process :: Async ()}
-
 data ManageCtl = ManageCtl { submanagers :: TMVar (Maybe [SubManager]) }
-
 type Manager = ReaderT Environment (ReaderT ManageCtl IO)
 
 manage :: Manager a -> Environment -> IO a
@@ -62,16 +60,49 @@ manage m env = do
     kill :: SubManager -> IO ()
     kill SubManager{..} = cancel process
 
-{- modifySpawnList :: ([SubManager] -> [SubManager]) -> Manager () -}
 
-{- -}
+cull :: TMVar (Maybe [SubManager]) -> IO (Maybe [SubManager])
+cull tjsubs = atomically $ do
+    jsubs <- takeTMVar tjsubs
+    case jsubs of
+      Nothing -> return Nothing
+      Just subs -> do
+        (done,working) <- divideSubManagers subs
+        putTMVar tjsubs (Just working)
+        return (Just done)
 
-{-
-spawn :: Manager () -> Manager ThreadId
-spawn subman = do
-  env <- environment
-  t <- forkFinally (subman `manage` env) (\r -> do putTMVar r)
--}  
+-- |divideSubManagers takes a list of SubManagers and returns two lists:
+-- one a list of completed submanagers, and the other a list of those
+-- still running. Ordering of lists is not guaranteed to be preserved.
+-- Will block if nothing has finished running
+divideSubManagers :: [SubManager] -> STM ([SubManager],[SubManager])
+divideSubManagers subs = go [] [] subs
+  where
+    -- This is really a right fold, though it may be less clear
+    -- expressed that way
+    go [] _ [] = retry
+    go cs rs [] = return (cs,rs)
+    go cs rs (s:ss) = (attempt s cs rs ss) `orElse` go cs (s:rs) ss
+
+    attempt s cs rs ss = do
+      _ <- waitCatchSTM (process s)
+      go (s:cs) rs ss
+
+{- The foldr version of divideSubManagers. Higher level, but not necessarily clearer...
+divideSubManagers subs = ((foldr doSplit retryOrDone) $ (map decide subs)) $ ([],[])
+  where
+    doSplit :: (([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])) ->
+               (([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])) ->
+               ([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])
+                             
+    doSplit splitNext decideFirst subs = decideFirst subs >>= splitNext
+    
+    retryOrDone :: ([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])
+    retryOrDone split@(culls,_) = if null culls then retry else return split
+
+    decide :: SubManager -> ([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])
+    decide s (cs,rs) = (waitCatchSTM (process s) >> return (s:cs,rs)) `orElse` return (cs, s:rs) -}
+
 
 fromEnvironment :: (Environment -> a) -> Manager a
 fromEnvironment = asks
