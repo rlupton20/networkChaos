@@ -40,6 +40,9 @@ type Manager = ReaderT Environment (ReaderT ManageCtl IO)
 data CullCrash = CullCrash deriving (Eq, Show, Typeable)
 instance Exception CullCrash
 
+-- |manage starts a manager process with an empty list of
+-- submanagers, and launches a culling thread, which removes
+-- completed submanagers from the tracking list.
 manage :: Manager a -> Environment -> IO ()
 manage m env = do
   subs <- newTMVarIO $ Just []
@@ -66,7 +69,10 @@ manage m env = do
             throwTo parentID CullCrash
             throwIO e)
 
-    handleException :: SomeException -> SubManagerLog -> Async () -> IO ()
+    handleException :: SomeException ->
+                       SubManagerLog ->
+                       Async () ->
+                       IO ()
     handleException e subs cullProc = do 
       killSubManagers subs
       let ex = fromException e :: Maybe CullCrash
@@ -93,7 +99,9 @@ manage m env = do
     kill :: SubManager -> IO ()
     kill SubManager{..} = cancel process
 
-
+-- |cull takes our tracked SubManagers, and returns a list of
+-- completed submanagers, leaving behind only those that are
+-- still running.
 cull :: SubManagerLog -> IO (Maybe [SubManager])
 cull tjsubs = atomically $ do
     jsubs <- takeTMVar tjsubs
