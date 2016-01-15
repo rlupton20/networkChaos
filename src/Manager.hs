@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, RankNTypes, RecordWildCards #-}
+{-# LANGUAGE ExistentialQuantification, RankNTypes, RecordWildCards, DeriveDataTypeable #-}
 module Manager
 ( Environment(..)
 , makeManaged
@@ -20,6 +20,7 @@ import Control.Concurrent.Async
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
+import Data.Typeable
 
 import Control.Monad
 
@@ -32,22 +33,54 @@ makeManaged rt = do
   return $ Environment rt cq
 
 data SubManager = SubManager { process :: Async ()}
-data ManageCtl = ManageCtl { submanagers :: TMVar (Maybe [SubManager]) }
+type SubManagerLog = TMVar (Maybe [SubManager])
+data ManageCtl = ManageCtl { submanagers :: SubManagerLog }
 type Manager = ReaderT Environment (ReaderT ManageCtl IO)
 
-manage :: Manager a -> Environment -> IO a
+data CullCrash = CullCrash deriving (Eq, Show, Typeable)
+instance Exception CullCrash
+
+manage :: Manager a -> Environment -> IO ()
 manage m env = do
   subs <- newTMVarIO $ Just []
-  (runReaderT (runReaderT m env) $ (ManageCtl subs)) `finally`
-    killSubManagers subs
-    
+  tid <- myThreadId
+  withAsyncWithUnmask (\restore -> cullLoop restore tid subs) $
+           \cullProc -> do
+             r <- try (runReaderT (runReaderT m env) $ (ManageCtl subs))
+             case r of
+               Left e -> handleException e subs cullProc
+               Right _ -> do
+                 cancel cullProc
+                 killSubManagers subs
+                 waitCatch cullProc
+                 return ()
   where
+
+    cullLoop :: (forall a. IO a -> IO a) ->
+                ThreadId ->
+                TMVar (Maybe [SubManager]) ->
+                IO ()
+    cullLoop restore parentID subs = let tk = ThreadKilled in
+      restore (forever $ cull subs) `catch`
+        (\e -> if e == tk then throwIO e else do
+            throwTo parentID CullCrash
+            throwIO e)
+
+    handleException :: SomeException -> SubManagerLog -> Async () -> IO ()
+    handleException e subs cullProc = do 
+      killSubManagers subs
+      let ex = fromException e :: Maybe CullCrash
+      case ex of
+        Just _ -> {- The exception was a CullCrash -} return ()
+        Nothing -> cancel cullProc >> waitCatch cullProc >> return ()
+      throwIO e
     
     killSubManagers :: TMVar (Maybe [SubManager]) -> IO ()
     killSubManagers subs = do
       submanagers <- getKillList subs
       sequence $ map kill submanagers
       sequence $ map (waitCatch.process) submanagers
+      --threadDelay 1000000
       return ()
       
     getKillList :: TMVar (Maybe [SubManager]) -> IO [SubManager]
