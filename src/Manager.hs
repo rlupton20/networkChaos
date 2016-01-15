@@ -75,7 +75,7 @@ manage m env = do
         Nothing -> cancel cullProc >> waitCatch cullProc >> return ()
       throwIO e
     
-    killSubManagers :: TMVar (Maybe [SubManager]) -> IO ()
+    killSubManagers :: SubManagerLog -> IO ()
     killSubManagers subs = do
       submanagers <- getKillList subs
       sequence $ map kill submanagers
@@ -83,7 +83,7 @@ manage m env = do
       --threadDelay 1000000
       return ()
       
-    getKillList :: TMVar (Maybe [SubManager]) -> IO [SubManager]
+    getKillList :: SubManagerLog -> IO [SubManager]
     getKillList subs = atomically $ do
       msubs <- takeTMVar subs
       case msubs of
@@ -94,7 +94,7 @@ manage m env = do
     kill SubManager{..} = cancel process
 
 
-cull :: TMVar (Maybe [SubManager]) -> IO (Maybe [SubManager])
+cull :: SubManagerLog -> IO (Maybe [SubManager])
 cull tjsubs = atomically $ do
     jsubs <- takeTMVar tjsubs
     case jsubs of
