@@ -4,6 +4,7 @@ module Manager
 , makeManaged
 , Manager
 , manage
+, spawn
 , environment
 , fromEnvironment
 {-, tryManager
@@ -17,6 +18,7 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.Async
 
+import Control.Monad.Trans
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
@@ -145,13 +147,30 @@ divideSubManagers subs = ((foldr doSplit retryOrDone) $ (map decide subs)) $ ([]
 
 -- |spawn creates a new manager in a new thread. If the new manager
 -- crashes, it is caught by cull, and the exception is not propogated.
-spawn :: Manager a -> Manager ThreadId
-spawn subman = undefined
+-- Each spawned submanager has its own new collection of submanagers,
+-- and its own culling thread.
+spawn :: Manager a -> Manager SubManager
+spawn man = do
+  env <- environment
+  subman <- subManLog
+  liftIO $ mask $ \restore -> do
+    a <- async (restore $ man `manage` env)
+    let m = SubManager a
+    atomically $ modifyTVar' subman $ fmap (m:) -- fmap over Maybe
+    restore (return m)
+    
+-- |subManLog provides the current running list of submanagers of a
+-- manager. Users of the Manager monad, should not be concerned with
+-- these, so this function is not exported, and only used internally.
+subManLog :: Manager SubManagerLog
+subManLog = lift (asks submanagers)
 
-
+-- |fromEnvironment provides the result of applying a passed function
+-- to the current environment
 fromEnvironment :: (Environment -> a) -> Manager a
 fromEnvironment = asks
 
+-- |environment provides the current environment.
 environment :: Manager Environment
 environment = ask
 

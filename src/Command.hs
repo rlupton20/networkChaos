@@ -29,7 +29,7 @@ commander = do
 
 -- Need to keep track of spawned threads, and make exception safe
 process :: Command -> Manager ()
-process dc@(DirectConnection _ _ _ _) = environment >>= \env -> liftIO $ forkIO ((direct dc) `manage` env) >> return ()
+process dc@(DirectConnection _ _ _ _) = spawn (direct dc) >> return ()
 process _ = liftIO $ error "Invalid command reached processor."
 
 direct :: Command -> Manager ()
