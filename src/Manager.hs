@@ -86,7 +86,6 @@ manage m env = do
       submanagers <- getKillList subs
       sequence $ map kill submanagers
       sequence $ map (waitCatch.process) submanagers
-      --threadDelay 1000000
       return ()
       
     getKillList :: SubManagerLog -> IO [SubManager]

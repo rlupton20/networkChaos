@@ -1,8 +1,6 @@
-{-# LANGUAGE ExistentialQuantification, RankNTypes #-}
 module Utils
 ( readM
-, passWork
-, withAsyncMaskInner ) where
+, passWork ) where
 
 import Text.Read
 
@@ -19,7 +17,4 @@ readM str = do
     Nothing -> fail $ "Could not read string: " ++ str
     Just parse -> return parse
 
-withAsyncMaskInner :: IO a -> ((forall a . IO a -> IO a) -> Async a -> IO b) -> IO b
-withAsyncMaskInner io inner = do
-  mask $ \restore -> do
-    withAsync (restore io) $ \a -> inner restore a
+
