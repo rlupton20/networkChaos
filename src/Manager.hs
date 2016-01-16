@@ -14,7 +14,7 @@ import Command.Types
 
 import Control.Concurrent
 import Control.Concurrent.STM
-import Control.Concurrent.STM.TMVar
+import Control.Concurrent.STM.TVar
 import Control.Concurrent.Async
 
 import Control.Monad.Trans.Reader
@@ -25,7 +25,7 @@ import Data.Typeable
 import Control.Monad
 
 data Environment = Environment { routingTable :: RoutingTable
-                           , commandQueue :: CommandQueue }
+                               , commandQueue :: CommandQueue }
 
 makeManaged :: RoutingTable -> IO Environment
 makeManaged rt = do
@@ -33,7 +33,7 @@ makeManaged rt = do
   return $ Environment rt cq
 
 data SubManager = SubManager { process :: Async ()}
-type SubManagerLog = TMVar (Maybe [SubManager])
+type SubManagerLog = TVar (Maybe [SubManager])
 data ManageCtl = ManageCtl { submanagers :: SubManagerLog }
 type Manager = ReaderT Environment (ReaderT ManageCtl IO)
 
@@ -45,7 +45,7 @@ instance Exception CullCrash
 -- completed submanagers from the tracking list.
 manage :: Manager a -> Environment -> IO ()
 manage m env = do
-  subs <- newTMVarIO $ Just []
+  subs <- newTVarIO $ Just []
   tid <- myThreadId
   withAsyncWithUnmask (\restore -> cullLoop restore tid subs) $
            \cullProc -> do
@@ -61,7 +61,7 @@ manage m env = do
 
     cullLoop :: (forall a. IO a -> IO a) ->
                 ThreadId ->
-                TMVar (Maybe [SubManager]) ->
+                SubManagerLog ->
                 IO ()
     cullLoop restore parentID subs = let tk = ThreadKilled in
       restore (forever $ cull subs) `catch`
@@ -90,9 +90,9 @@ manage m env = do
       
     getKillList :: SubManagerLog -> IO [SubManager]
     getKillList subs = atomically $ do
-      msubs <- takeTMVar subs
+      msubs <- swapTVar subs Nothing
       case msubs of
-        Just toKill -> putTMVar subs Nothing >> return toKill
+        Just toKill -> return toKill
         Nothing -> {- Already killed -} return []
 
     kill :: SubManager -> IO ()
@@ -103,12 +103,12 @@ manage m env = do
 -- still running.
 cull :: SubManagerLog -> IO (Maybe [SubManager])
 cull tjsubs = atomically $ do
-    jsubs <- takeTMVar tjsubs
+    jsubs <- readTVar tjsubs
     case jsubs of
       Nothing -> return Nothing
       Just subs -> do
         (done,working) <- divideSubManagers subs
-        putTMVar tjsubs (Just working)
+        writeTVar tjsubs (Just working)
         return (Just done)
 
 -- |divideSubManagers takes a list of SubManagers and returns two lists:
@@ -142,6 +142,11 @@ divideSubManagers subs = ((foldr doSplit retryOrDone) $ (map decide subs)) $ ([]
 
     decide :: SubManager -> ([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])
     decide s (cs,rs) = (waitCatchSTM (process s) >> return (s:cs,rs)) `orElse` return (cs, s:rs) -}
+
+-- |spawn creates a new manager in a new thread. If the new manager
+-- crashes, it is caught by cull, and the exception is not propogated.
+spawn :: Manager a -> Manager ThreadId
+spawn subman = undefined
 
 
 fromEnvironment :: (Environment -> a) -> Manager a
