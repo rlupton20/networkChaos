@@ -7,6 +7,10 @@ cd Command
 rm *.o *.hi
 cd ..
 
+cd Manager
+rm *.o *.hi
+cd ..
+
 cd Relay
 rm *.o *.hi
 cd ..
