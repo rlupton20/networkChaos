@@ -22,12 +22,19 @@ type Stack = StateT ProcStack IO
 addToStack :: IO () -> ProcStack -> ProcStack
 addToStack io ios = (io:ios)
 
+-- |register adds an IO () to the Stack to be executed
+-- when runStack is called.
 register :: IO () -> Stack ()
 register io = modify' (addToStack io)
 
 buildStack :: Stack a -> IO ProcStack
 buildStack ls = execStateT ls []
 
+-- |runStack forks its registered IO () processes, ensuring
+-- that exceptions are caught and thrown correctly. If the
+-- Stack finishes running, it ensures that all the threads
+-- created by the Stack are killed, and all exception handlers
+-- are allowed to run.
 runStack :: Stack a -> IO ()
 runStack stck = do
   ios <- buildStack stck
@@ -44,6 +51,10 @@ runStack stck = do
     launchStack reg (s:ss) ws = withRegisteredAsync reg s $ \w ->
       launchStack reg ss (w:ws)
 
+-- |blocksInForeign is a wrapper for IO () values which
+-- may block in a foreign call. Such a value when forked
+-- may not receive interrupts, so could cause the clean
+-- shutdown of a Stack to hang.
 blocksInForeign :: IO a -> IO a
 blocksInForeign io = do
   a <- async io

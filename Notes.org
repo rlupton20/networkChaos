@@ -122,8 +122,9 @@ If the TUN devices MTU (Maximum Transmission Unit) is set low enough, then enoug
 * January 2016 todo list
 ** DONE Make ProcUnit exception safe (replaced with Stack and Buildable)
 Wrapping Async might be the best way
-** TODO Make Manager spawn exception safe threads
-This can't use async (at least not in the same way). We don't want the program to suffer from these threads failing, but we want a clean shutdown, and consistent spawn list.
+** DONE Make Manager spawn exception safe threads
+Custom async spawning system, with a culling thread removing dead submanagers from a list.
 ** TODO Tidy and check overall excpetion safety
 Probably will follow from the above.
 
+** TODO Make typing of Stack and manage make some sense
