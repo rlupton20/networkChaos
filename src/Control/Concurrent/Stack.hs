@@ -27,17 +27,17 @@ addToStack io ios = (io:ios)
 register :: IO () -> Stack ()
 register io = modify' (addToStack io)
 
-buildStack :: Stack a -> IO ProcStack
-buildStack ls = execStateT ls []
+buildStack :: Stack a -> IO (a, ProcStack)
+buildStack ls = runStateT ls []
 
 -- |runStack forks its registered IO () processes, ensuring
 -- that exceptions are caught and thrown correctly. If the
 -- Stack finishes running, it ensures that all the threads
 -- created by the Stack are killed, and all exception handlers
 -- are allowed to run.
-runStack :: Stack a -> IO ()
+runStack :: Stack a -> IO a
 runStack stck = do
-  ios <- buildStack stck
+  (val, ios) <- buildStack stck
   reg <- newTVarIO []
 
   -- Now we run the stack, ensuring that if the Stack
@@ -45,7 +45,7 @@ runStack stck = do
   -- run.
   launchStack reg ios [] `finally`
     ( do as <- readTVarIO reg; sequence $ map waitCatch as )    
-  return ()
+  return val
   where
     launchStack _ [] ws = waitAny ws
     launchStack reg (s:ss) ws = withRegisteredAsync reg s $ \w ->
