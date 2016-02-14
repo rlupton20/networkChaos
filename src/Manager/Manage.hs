@@ -21,7 +21,7 @@ instance Exception CullCrash
 -- |manage starts a manager process with an empty list of
 -- submanagers, and launches a culling thread, which removes
 -- completed submanagers from the tracking list.
-manage :: Manager a -> Environment -> IO ()
+manage :: Manager () -> Environment -> IO ()
 manage m env = do
   subs <- newTVarIO $ Just []
   tid <- myThreadId

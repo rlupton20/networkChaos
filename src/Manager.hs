@@ -38,7 +38,7 @@ makeManaged rt = do
 -- submanager then another method should be used, e.g. Async.
 -- The submanager is of course responsible for leaving resources in a
 -- consistent state in the event of an exception.
-spawn :: Manager a -> Manager SubManager
+spawn :: Manager () -> Manager SubManager
 spawn man = do
   env <- environment
   subman <- subManLog
