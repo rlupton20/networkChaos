@@ -33,17 +33,38 @@ makeManaged rt = do
 -- |spawn creates a new manager in a new thread. If the new manager
 -- crashes, it is caught by cull, and the exception is not propogated.
 -- Each spawned submanager has its own new collection of submanagers,
--- and its own culling thread.
+-- and its own culling thread. This is intended to create independent
+-- submanagers --- if the parent manager wants a result back from the
+-- submanager then another method should be used, e.g. Async.
+-- The submanager is of course responsible for leaving resources in a
+-- consistent state in the event of an exception.
 spawn :: Manager a -> Manager SubManager
 spawn man = do
   env <- environment
   subman <- subManLog
   liftIO $ mask $ \restore -> do
     a <- async (restore $ man `manage` env)
-    let m = SubManager a
-    atomically $ modifyTVar' subman $ fmap (m:) -- fmap over Maybe
-    restore (return m)
-    
+    a `makeMonitoredOn` subman
+    restore (return $ SubManager a)
+
+    where
+
+      makeMonitoredOn :: Async () -> SubManagerLog -> IO ()
+      makeMonitoredOn a subman = do
+        let m = SubManager a        
+        watched <- atomically $ do
+          subs <- readTVar subman
+          let subs' = fmap (m:) subs in
+            subs' `seq` return subs'
+
+        -- Note there is a possiblity our manager is killed, and
+        -- all submanagers are killed. In this case we manually
+        -- kill the new Async.
+        case watched of
+          Just _ -> return ()
+          Nothing -> do cancel a >> waitCatch a >> return ()
+          
+
 -- |subManLog provides the current running list of submanagers of a
 -- manager. Users of the Manager monad, should not be concerned with
 -- these, so this function is not exported, and only used internally.
