@@ -57,11 +57,11 @@ manage m env = do
     -- handleException has the task of cleaning up. There are two cases:
     -- 1) either our culling thread crashed and sent us an exception, in
     --    which case cullProc is already dealing with an exception and we
-    --    and we just need to wait for it to do its cleanup.
+    --    just need to wait for it to do its cleanup.
     -- 2) something went wrong in the manager itself, and cullProc doesn't
     --    know about this, so we need to cancel the cullProc thread manually,
     --    and wait for it to do cleanup.
-    -- we deal with these two cases separately. In both cases, the submanagers
+    -- We deal with these two cases separately. In both cases, the submanagers
     -- need cleaning up.
     handleException :: SomeException ->
                        SubManagerLog ->
