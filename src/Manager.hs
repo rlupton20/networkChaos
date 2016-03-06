@@ -57,9 +57,14 @@ spawn man = do
           let subs' = fmap (m:) subs in
             subs' `seq` return subs'
 
-        -- Note there is a possiblity our manager is killed, and
-        -- all submanagers are killed. In this case we manually
-        -- kill the new Async.
+        -- Note there is a possiblity our manager has been  killed, and
+        -- all submanagers are killed, before we have the chance to add
+        -- our new SubManager to the tracking list. If that happens, we
+        -- must kill the new SubManager manually. Note that if the
+        -- Manager and its SubManagers are killed between the above STM
+        -- transaction and the manual killing below, that's fine, since
+        -- our new SubManager must have been added to the list, and the
+        -- built in clean up procedure will take care of it.
         case watched of
           Just _ -> return ()
           Nothing -> do cancel a >> waitCatch a >> return ()
