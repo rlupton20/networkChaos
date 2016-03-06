@@ -25,18 +25,24 @@ manage :: Manager () -> Environment -> IO ()
 manage m env = do
   subs <- newTVarIO $ Just []
   tid <- myThreadId
-  withAsyncWithUnmask (\restore -> cullLoop restore tid subs) $
-           \cullProc -> do
-             r <- try (runReaderT (runReaderT m env) $ (ManageCtl subs))
-             case r of
-               Left e -> handleException e subs cullProc
-               Right _ -> do
-                 cancel cullProc
-                 killSubManagers subs
-                 waitCatch cullProc
-                 return ()
-  where
+  
+  mask $ \restore -> do
+    cullProc <- async $ cullLoop restore tid subs
+    r <- try (restore (runReaderT (runReaderT m env) $ (ManageCtl subs)))
+    case r of
+      -- If our manager has crashed with some exception, then we pass the
+      -- exception to a handler to do the cleanup.
+      Left e -> handleException e subs cullProc
+      -- Otherwise, our manager ran successfuly, and there is nothing left
+      -- to do, so cleanup any remaining child threads.
+      Right _ -> do
+        cancel cullProc
+        killSubManagers subs
+        waitCatch cullProc
+        return ()
 
+  where
+    
     cullLoop :: (forall a. IO a -> IO a) ->
                 ThreadId ->
                 SubManagerLog ->
@@ -47,6 +53,16 @@ manage m env = do
             throwTo parentID CullCrash
             throwIO e)
 
+
+    -- handleException has the task of cleaning up. There are two cases:
+    -- 1) either our culling thread crashed and sent us an exception, in
+    --    which case cullProc is already dealing with an exception and we
+    --    and we just need to wait for it to do its cleanup.
+    -- 2) something went wrong in the manager itself, and cullProc doesn't
+    --    know about this, so we need to cancel the cullProc thread manually,
+    --    and wait for it to do cleanup.
+    -- we deal with these two cases separately. In both cases, the submanagers
+    -- need cleaning up.
     handleException :: SomeException ->
                        SubManagerLog ->
                        Async () ->
@@ -55,7 +71,7 @@ manage m env = do
       killSubManagers subs
       let ex = fromException e :: Maybe CullCrash
       case ex of
-        Just _ -> {- The exception was a CullCrash -} return ()
+        Just _ -> {- The exception was a CullCrash -} waitCatch cullProc >> return ()
         Nothing -> cancel cullProc >> waitCatch cullProc >> return ()
       throwIO e
     
