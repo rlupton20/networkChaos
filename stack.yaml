@@ -1,0 +1,9 @@
+flags: {}
+extra-package-dbs: []
+packages:
+- '.'
+extra-deps:
+- stringprep-1.0.0
+- stunclient-0.1.0.1
+- text-1.2.2.0
+resolver: lts-5.8
