@@ -130,3 +130,6 @@ Probably will follow from the above.
 ** TODO Make typing of Stack and manage make some sense
 * Tinc
 Small VPN for creating mesh networks. No server client structure.
+* Cabal file specifics
+  c-sources:	       src/Network/tuntap.c
+  ghc-options:	       -O2 -threaded
