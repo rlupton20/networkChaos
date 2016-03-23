@@ -8,5 +8,5 @@ sudo ./scripts/mktun.sh $1 $2
 # To start the code, we need to remove the subnet mask from
 # our IP address.
 echo ${2%%/*}
-vanguard $1 ${2%%/*} +RTS -p
+stack exec -- vanguard $1 ${2%%/*} +RTS -p
 ./scripts/deltun.sh $1
