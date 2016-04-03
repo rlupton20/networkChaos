@@ -3,10 +3,10 @@
 # with passing stack various options
 
 vanguard:
-	stack build
+	stack build --ghc-options="-threaded -O2"
 
 profiled:
-	stack build --executable-profiling --library-profiling --ghc-options="-fprof-auto -rtsopts -threaded"
+	stack build --executable-profiling --library-profiling --ghc-options="-fprof-auto -rtsopts -threaded -O2"
 
 clean:
 	stack clean
