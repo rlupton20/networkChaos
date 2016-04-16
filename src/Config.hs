@@ -1,5 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Config where
+module Config
+( NetConfig(..)
+, DistributedHashTable(..)
+, VanguardConfig(..)
+, loadConfigFromFile
+) where
 
 import Config.Types
 
@@ -18,5 +23,5 @@ instance FromJSON DistributedHashTable where
   parseJSON (Object v) = DistributedHashTable <$> v .: "db" <*> v .: "address"
   parseJSON _ = empty
 
-loadConfig :: String -> IO (Either ParseException VanguardConfig)
-loadConfig file = decodeFileEither file
+loadConfigFromFile :: String -> IO (Either ParseException VanguardConfig)
+loadConfigFromFile file = decodeFileEither file

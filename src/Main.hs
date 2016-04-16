@@ -1,5 +1,7 @@
 module Main where
 
+import Config
+
 import Network.TunTap
 
 import Control.Concurrent.Stack
@@ -25,16 +27,26 @@ import System.Environment
 import Control.Monad
 import Control.Monad.IO.Class
 
+
 -- Only needed when setting up router
 import Debug.PacketParsing.IP4 (parseIP4)
 -- End temporary section
 
 main :: IO ()
 main = do
-  -- First lets deal with the command line arguments
-  [device, myip] <- getArgs
+  -- Our command line argument is a configuration
+  -- file for the network we want to connect to.
+  [configFile] <- getArgs
+  config <- loadConfigFromFile configFile
+
+  case config of
+    Left err -> error $ show err
+    Right cfg -> do
+      let dev = device $ net cfg
+          myip = ip $ net cfg
+      withTUN dev $ \tun -> runStack (core tun myip)
   
-  withTUN device $ \tun -> runStack (core tun myip)
+
 
 core :: TunTap -> String -> Stack ()
 core tt ip = do
