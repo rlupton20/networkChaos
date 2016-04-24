@@ -19,7 +19,10 @@ import qualified Data.ByteString as B
 data Addr = Addr {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 deriving (Eq, Ord, Show, Read)
 
 -- |addr takes a String and (tries) to convert it into an Addr
--- inside a Monad.
+-- inside a Monad. Note that if the string contains Integers that
+-- are bigger than 255, they are truncated, that is, the least
+-- significant bits are taken. e.g.
+-- addr "256.0.0.0" yields (Addr 0 0 0 0).
 addr :: (Monad m) => String -> m Addr
 addr str = do
   let ads = words $ map (\x -> if x == '.' then ' ' else x) str

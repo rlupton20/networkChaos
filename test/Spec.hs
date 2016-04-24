@@ -8,5 +8,4 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: [Test]
-tests = [ testGroup "Types.hs" $ hUnitTestToTests test
-        , testGroup "Types.hs2" $ hUnitTestToTests test2 ]
+tests = [ testGroup "Types.hs" $ hUnitTestToTests typesTest]
