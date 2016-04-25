@@ -10,7 +10,7 @@ type Input = String
 type Expected a = a
 
 addrConversionTest :: (String, String, Expected (Maybe Addr)) -> Test
-addrConversionTest (label, input, expected) = label ~: (addr input :: Maybe Addr) @=? expected
+addrConversionTest (label, input, expected) = label ~: expected @=? (addr input :: Maybe Addr)
 
 addrConversionRuns = [ ("addr: doesn't convert \"String\"", 	   "String", Nothing)
 		     , ("addr: addr and addrW8 agree", 		   "1.2.34.123", Just $ addrW8 1 2 34 123)
