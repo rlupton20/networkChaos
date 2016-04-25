@@ -18,6 +18,9 @@ routingTableTest = TF.testGroup "RoutingTable.hs unit tests:" $ hUnitTestToTests
 routingTableUnitTests :: HU.Test
 routingTableUnitTests = HU.TestList $ [addAndRetrieveRoute, lookupNoRoute, delRouteNoRoute, newRouteOverwrites]
 
+-- First lets build some utility objects and functions
+-- for testing with.
+
 -- We need an to pass to newRoutingTable, but it
 -- doesn't actually need to be touched.
 duffInjector :: Injector
@@ -29,6 +32,8 @@ duffQueue = undefined
 
 makeTestRT :: IO RoutingTable
 makeTestRT = newRoutingTable duffInjector
+
+-- Now lets specify the tests
 
 addAndRetrieveRoute :: HU.Test
 addAndRetrieveRoute = "newRoute:getDirectionWith: retrieves address entered by newRoute" ~: test

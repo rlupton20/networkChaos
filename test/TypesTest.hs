@@ -45,7 +45,7 @@ addrConversionRuns = [ ("addr: doesn't convert \"String\"", 	   "String", Nothin
 -- |addrUnitTests is the collection of unit tests for addr (built using
 -- addrConversionTest mapped over addrConversionRuns).
 addrUnitTests :: HU.Test
-addrUnitTests = HU.TestLabel "addr unit tests" $ HU.TestList $ map addrConversionTest addrConversionRuns
+addrUnitTests = TestList $ map addrConversionTest addrConversionRuns
 
 -- |quickCheckAddr is a QuickCheck that addr reads randomly generated
 -- IP addresses.
