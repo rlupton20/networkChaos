@@ -1,6 +1,5 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes, RecordWildCards, DeriveDataTypeable #-}
-module Manager.Manage
-( manage ) where
+module Manager.Manage where
 
 import Manager.Types
 
