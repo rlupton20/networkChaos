@@ -133,3 +133,8 @@ Small VPN for creating mesh networks. No server client structure.
 * Cabal file specifics
   c-sources:	       src/Network/tuntap.c
   ghc-options:	       -O2 -threaded
+* Test ideas
+** Manager
+To crash the culling thread of a Manager monad transformer stack, add an undefined SubManager.
+To crash a manager, make it evaluate something undefined.
+Fine grained crashing may be difficult to achieve.
