@@ -1,6 +1,5 @@
 module Manager.Manager where
 
-  
 import Manager.Types
 import Manager.Manage (manage)
 

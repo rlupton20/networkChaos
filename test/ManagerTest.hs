@@ -22,10 +22,22 @@ import Manager.Types
 import Routing.RoutingTable
 
 managerTest :: TF.Test
-managerTest = testGroup "Manager.hs tests" $ hUnitTestToTests exceptionTests
+managerTest = testGroup "Manager.hs tests" $ hUnitTestToTests $ HU.TestList [ managerUnitTests, exceptionTests ]
+
+managerUnitTests :: HU.Test
+managerUnitTests = HU.TestLabel "Basic manager unit tests" $ HU.TestList [ manageTest ]
+
+manageTest :: HU.Test
+manageTest = "manage: launches a manager and returns" ~: test
+  where
+    test = do
+      env <- makeManaged duffRoutingTable
+      r <- (return ()) `manage` env
+      () @=? r
 
 exceptionTests :: HU.Test
 exceptionTests = HU.TestLabel "Exception infrastructure tests" $ HU.TestList []
+
 
 -- The following would be good to test (crashing the culling thread and then
 -- checking the exception propagates, but I'm not sure if / how it can be done.
