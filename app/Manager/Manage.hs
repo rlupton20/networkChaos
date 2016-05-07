@@ -26,18 +26,18 @@ manage m env = do
   tid <- myThreadId
   
   mask $ \restore -> do
-    cullProc <- async $ cullLoop restore tid subs
+    culler <- async $ cullLoop restore tid subs
     r <- try (restore (runReaderT (runReaderT m env) $ (ManageCtl subs)))
     case r of
       -- If our manager has crashed with some exception, then we pass the
       -- exception to a handler to do the cleanup.
-      Left e -> handleException e subs cullProc
+      Left e -> handleException e subs culler
       -- Otherwise, our manager ran successfuly, and there is nothing left
-      -- to do, so cleanup any remaining child threads.
+      -- to do, so cleanup any remaining child (submanager) threads.
       Right _ -> do
-        cancel cullProc
+        cancel culler
         killSubManagers subs
-        waitCatch cullProc
+        waitCatch culler
         return ()
 
   where
@@ -66,26 +66,26 @@ manage m env = do
                        SubManagerLog ->
                        Async () ->
                        IO ()
-    handleException e subs cullProc = do 
+    handleException e subs culler = do 
       killSubManagers subs
       let ex = fromException e :: Maybe CullCrash
       case ex of
-        Just _ -> {- The exception was a CullCrash -} waitCatch cullProc >> return ()
-        Nothing -> cancel cullProc >> waitCatch cullProc >> return ()
+        Just _ -> {- The exception was a CullCrash -} waitCatch culler >> return ()
+        Nothing -> cancel culler >> waitCatch culler >> return ()
       throwIO e
     
     killSubManagers :: SubManagerLog -> IO ()
-    killSubManagers subs = do
-      submanagers <- getKillList subs
+    killSubManagers sml = do
+      submanagers <- getKillList sml
       sequence $ map kill submanagers
       sequence $ map (waitCatch.process) submanagers
       return ()
       
     getKillList :: SubManagerLog -> IO [SubManager]
-    getKillList subs = atomically $ do
-      msubs <- swapTVar subs Nothing
-      case msubs of
-        Just toKill -> return toKill
+    getKillList sml = atomically $ do
+      subs <- swapTVar sml Nothing
+      case subs of
+        Just targets -> return targets
         Nothing -> {- Already killed -} return []
 
     kill :: SubManager -> IO ()
@@ -94,44 +94,36 @@ manage m env = do
 -- |cull takes our tracked SubManagers, and returns a list of
 -- completed submanagers, leaving behind only those that are
 -- still running.
-cull :: SubManagerLog -> IO (Maybe [SubManager])
-cull tjsubs = atomically $ do
-    jsubs <- readTVar tjsubs
-    case jsubs of
-      Nothing -> return Nothing
-      Just subs -> do
-        (done,working) <- divideSubManagers subs
-        writeTVar tjsubs (Just working)
-        return (Just done)
+cull :: SubManagerLog -> IO [SubManager]
+cull sml = atomically $ do
+    subs <- readTVar sml
+    maybe (return []) tidy subs
+    where
+      tidy :: [SubManager] -> STM [SubManager]
+      tidy submanagers = do
+        (done,working) <- divideSubmanagers submanagers
+        writeTVar sml (Just working)
+        return done
 
--- |divideSubManagers takes a list of SubManagers and returns two lists:
+
+-- |divideSubmanagers takes a list of SubManagers and returns two lists:
 -- one a list of completed submanagers, and the other a list of those
 -- still running. Ordering of lists is not guaranteed to be preserved.
 -- Will block if nothing has finished running
-divideSubManagers :: [SubManager] -> STM ([SubManager],[SubManager])
-divideSubManagers subs = go [] [] subs
+divideSubmanagers :: [SubManager] -> STM ([SubManager],[SubManager])
+divideSubmanagers submanagers = go [] [] submanagers
   where
-    -- This is really a right fold, though it may be less clear
-    -- expressed that way
+    -- This is really a right fold, but expressing it that way is
+    -- opaque. This recursive worker function works along the list
+    -- of submanagers and divides them into culls and retries.
     go [] _ [] = retry
     go cs rs [] = return (cs,rs)
-    go cs rs (s:ss) = (attempt s cs rs ss) `orElse` go cs (s:rs) ss
+    go cs rs (s:ss) = (tryDecide s cs rs ss) `orElse` go cs (s:rs) ss
 
-    attempt s cs rs ss = do
+    -- tryDecide looks to see if the submanager s has finished,
+    -- otherwise it does an STM retry. Note that waitCatchSTM contains
+    -- a retry. If the submanager has finished, it is added to the
+    -- cull list.
+    tryDecide s cs rs ss = do
       _ <- waitCatchSTM (process s)
       go (s:cs) rs ss
-
-{- The foldr version of divideSubManagers. Higher level, but not necessarily clearer...
-divideSubManagers subs = ((foldr doSplit retryOrDone) $ (map decide subs)) $ ([],[])
-  where
-    doSplit :: (([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])) ->
-               (([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])) ->
-               ([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])
-                             
-    doSplit splitNext decideFirst subs = decideFirst subs >>= splitNext
-    
-    retryOrDone :: ([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])
-    retryOrDone split@(culls,_) = if null culls then retry else return split
-
-    decide :: SubManager -> ([SubManager],[SubManager]) -> STM ([SubManager],[SubManager])
-    decide s (cs,rs) = (waitCatchSTM (process s) >> return (s:cs,rs)) `orElse` return (cs, s:rs) -}
