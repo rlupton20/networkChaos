@@ -5,9 +5,7 @@ module Manager
 , manage
 , spawn
 , environment
-, fromEnvironment
-{-, tryManager
-, maskManager-} ) where
+, fromEnvironment ) where
 
 import Manager.Manager
 import Manager.Manage
