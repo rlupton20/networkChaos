@@ -26,7 +26,7 @@ typesTest = testGroup "Test.hs tests:" $ [addrTests]
 -- function addr.
 addrTests :: TF.Test
 addrTests = TF.testGroup "addr tests:" $ [ TF.testGroup "addr unit tests:" $ hUnitTestToTests addrUnitTests
-                                         , TF.testGroup "addr QuickCheck:" $ [quickCheckAddr] ]
+                                         , TF.testGroup "addr QuickCheck:" $ [quickCheckAddr, quickCheckAddrOnBad] ]
 
 
 -- |addrConversionTest creates a test for each input and expected outcome
@@ -54,3 +54,9 @@ quickCheckAddr = testProperty "addr: reads generated IPs correctly" $ addrReads
   where
     addrReads :: Word8 -> Word8 -> Word8 -> Word8 -> Bool
     addrReads a b c d = (Just $ addrW8 a b c d) == (addr $ show a ++ "." ++ show b ++ "." ++ show c ++ "." ++ show d)
+
+quickCheckAddrOnBad :: TF.Test
+quickCheckAddrOnBad = testProperty "addr: doesn't parse strings that aren't IP addresses" $ addrRandomParse
+  where
+    addrRandomParse :: String -> Bool
+    addrRandomParse str = ( (addr str)==Nothing ) || ( (Just str)==(fmap renderAddr $ addr str) )

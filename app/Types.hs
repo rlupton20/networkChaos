@@ -3,6 +3,7 @@ module Types
 ( Addr
 , addr
 , addrW8
+, renderAddr
 , Packet
 , Worker
 , Injector ) where
@@ -17,6 +18,11 @@ import qualified Data.ByteString as B
 -- type from network-house (note, the Show and Read instances are
 -- different).
 data Addr = Addr {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 deriving (Eq, Ord, Show, Read)
+
+-- |renderAddr turns an Addr into a string in the way we would
+-- normally expect. Mostly useful for debugging and testing.
+renderAddr :: Addr -> String
+renderAddr (Addr a b c d) = show a ++ "." ++ show b ++ "." ++ show c ++ "." ++ show d
 
 -- |addr takes a String and (tries) to convert it into an Addr
 -- inside a Monad. Note that if the string contains Integers that
