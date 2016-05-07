@@ -11,7 +11,7 @@ import Control.Monad.Trans.Reader
 data Environment = Environment { routingTable :: RoutingTable
                                , commandQueue :: CommandQueue }
 
-data SubManager = SubManager { process :: Async () }
-type SubManagerLog = TVar (Maybe [SubManager])
-data ManageCtl = ManageCtl { submanagers :: SubManagerLog }
+data Submanager = Submanager { process :: Async () }
+type SubmanagerLog = TVar (Maybe [Submanager])
+data ManageCtl = ManageCtl { submanagers :: SubmanagerLog }
 type Manager = ReaderT Environment (ReaderT ManageCtl IO)

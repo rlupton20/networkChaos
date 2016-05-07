@@ -36,7 +36,7 @@ manage m env = do
       -- to do, so cleanup any remaining child (submanager) threads.
       Right _ -> do
         cancel culler
-        killSubManagers subs
+        killSubmanagers subs
         waitCatch culler
         return ()
 
@@ -44,7 +44,7 @@ manage m env = do
     
     cullLoop :: (forall a. IO a -> IO a) ->
                 ThreadId ->
-                SubManagerLog ->
+                SubmanagerLog ->
                 IO ()
     cullLoop restore parentID subs = let tk = ThreadKilled in
       restore (forever $ cull subs) `catch`
@@ -63,43 +63,43 @@ manage m env = do
     -- We deal with these two cases separately. In both cases, the submanagers
     -- need cleaning up.
     handleException :: SomeException ->
-                       SubManagerLog ->
+                       SubmanagerLog ->
                        Async () ->
                        IO ()
     handleException e subs culler = do 
-      killSubManagers subs
+      killSubmanagers subs
       let ex = fromException e :: Maybe CullCrash
       case ex of
         Just _ -> {- The exception was a CullCrash -} waitCatch culler >> return ()
         Nothing -> cancel culler >> waitCatch culler >> return ()
       throwIO e
     
-    killSubManagers :: SubManagerLog -> IO ()
-    killSubManagers sml = do
+    killSubmanagers :: SubmanagerLog -> IO ()
+    killSubmanagers sml = do
       submanagers <- getKillList sml
       sequence $ map kill submanagers
       sequence $ map (waitCatch.process) submanagers
       return ()
       
-    getKillList :: SubManagerLog -> IO [SubManager]
+    getKillList :: SubmanagerLog -> IO [Submanager]
     getKillList sml = atomically $ do
       subs <- swapTVar sml Nothing
       case subs of
         Just targets -> return targets
         Nothing -> {- Already killed -} return []
 
-    kill :: SubManager -> IO ()
-    kill SubManager{..} = cancel process
+    kill :: Submanager -> IO ()
+    kill Submanager{..} = cancel process
 
 -- |cull takes our tracked SubManagers, and returns a list of
 -- completed submanagers, leaving behind only those that are
 -- still running.
-cull :: SubManagerLog -> IO [SubManager]
+cull :: SubmanagerLog -> IO [Submanager]
 cull sml = atomically $ do
     subs <- readTVar sml
     maybe (return []) tidy subs
     where
-      tidy :: [SubManager] -> STM [SubManager]
+      tidy :: [Submanager] -> STM [Submanager]
       tidy submanagers = do
         (done,working) <- divideSubmanagers submanagers
         writeTVar sml (Just working)
@@ -110,7 +110,7 @@ cull sml = atomically $ do
 -- one a list of completed submanagers, and the other a list of those
 -- still running. Ordering of lists is not guaranteed to be preserved.
 -- Will block if nothing has finished running
-divideSubmanagers :: [SubManager] -> STM ([SubManager],[SubManager])
+divideSubmanagers :: [Submanager] -> STM ([Submanager],[Submanager])
 divideSubmanagers submanagers = go [] [] submanagers
   where
     -- This is really a right fold, but expressing it that way is

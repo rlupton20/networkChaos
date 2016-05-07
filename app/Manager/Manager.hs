@@ -29,17 +29,17 @@ makeManaged rt = do
 -- submanager then another method should be used, e.g. Async.
 -- The submanager is of course responsible for leaving resources in a
 -- consistent state in the event of an exception.
-spawn :: Manager () -> Manager SubManager
+spawn :: Manager () -> Manager Submanager
 spawn manager = do
   env <- environment
   sml <- submanagerLog
   liftIO $ mask $ \restore -> do
     a <- async (restore $ manager `manage` env)
-    let m = SubManager a
+    let m = Submanager a
     sml `track` m
-    restore (return $ SubManager a)
+    restore (return $ Submanager a)
     where
-      track :: SubManagerLog -> SubManager -> IO ()
+      track :: SubmanagerLog -> Submanager -> IO ()
       track sml m = atomically $ modifyTVar' sml $ fmap (m:)
   {- There is some subtlty to the operation here.
 
@@ -64,7 +64,7 @@ spawn manager = do
 -- |subManagerLog provides the current running list of submanagers of a
 -- manager. Users of the Manager monad, should not be concerned with
 -- these, so this function is not exported, and only used internally.
-submanagerLog :: Manager SubManagerLog
+submanagerLog :: Manager SubmanagerLog
 submanagerLog = lift (asks submanagers)
 
 -- |fromEnvironment provides the result of applying a passed function
