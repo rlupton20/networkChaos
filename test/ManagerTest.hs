@@ -14,9 +14,6 @@ import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (try, getMaskingState, MaskingState(..))
 
-import Data.Time.Clock (getCurrentTime)
-import System.Timeout (timeout)
-
 import Manager.Manager
 import Manager.Manage
 import Manager.Types
@@ -27,7 +24,7 @@ managerTest :: TF.Test
 managerTest = testGroup "Manager.hs tests" $ hUnitTestToTests $ HU.TestList [ managerUnitTests, exceptionTests ]
 
 managerUnitTests :: HU.Test
-managerUnitTests = HU.TestLabel "Basic manager unit tests" $ HU.TestList [ manageTest, spawnTrackTest, postSpawnMaskingState ]
+managerUnitTests = HU.TestLabel "Basic manager unit tests" $ HU.TestList [ manageTest, spawnTrackTest, cullRemovalTest, postSpawnMaskingState ]
 
 manageTest :: HU.Test
 manageTest = "manage: launches a manager and returns" ~: test
@@ -38,18 +35,36 @@ manageTest = "manage: launches a manager and returns" ~: test
       () @=? r
 
 spawnTrackTest :: HU.Test
-spawnTrackTest = "spawn: check spawned submanagers are tracked by the parent" ~: test
+spawnTrackTest = "spawn: check spawned submanager is tracked by the parent" ~: test
   where
     test = do
       env <- makeManaged duffRoutingTable
       manager `manage` env
 
+    manager :: Manager ()
     manager = do
       spawn $ liftIO (threadDelay 1000000)
       sml <- submanagerLog
       liftIO $ do
         subs <- atomically $ readTVar sml
         Just 1 @=? fmap length subs
+        return ()
+
+cullRemovalTest :: HU.Test
+cullRemovalTest = "manage: check culling thread removes finished submanager" ~: test
+  where
+    test = do
+      env <- makeManaged duffRoutingTable
+      manager `manage` env
+
+    manager :: Manager ()
+    manager = do
+      spawn $ return ()
+      sml <- submanagerLog
+      liftIO $ do
+        threadDelay 1000000
+        subs <- atomically $ readTVar sml
+        Just 0 @=? fmap length subs
         return ()
 
 
