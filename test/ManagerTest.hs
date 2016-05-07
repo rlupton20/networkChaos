@@ -12,7 +12,7 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
-import Control.Exception (try)
+import Control.Exception (try, getMaskingState, MaskingState(..))
 
 import Data.Time.Clock (getCurrentTime)
 import System.Timeout (timeout)
@@ -27,7 +27,7 @@ managerTest :: TF.Test
 managerTest = testGroup "Manager.hs tests" $ hUnitTestToTests $ HU.TestList [ managerUnitTests, exceptionTests ]
 
 managerUnitTests :: HU.Test
-managerUnitTests = HU.TestLabel "Basic manager unit tests" $ HU.TestList [ manageTest, spawnTrackTest ]
+managerUnitTests = HU.TestLabel "Basic manager unit tests" $ HU.TestList [ manageTest, spawnTrackTest, postSpawnMaskingState ]
 
 manageTest :: HU.Test
 manageTest = "manage: launches a manager and returns" ~: test
@@ -51,6 +51,21 @@ spawnTrackTest = "spawn: check spawned submanagers are tracked by the parent" ~:
         subs <- atomically $ readTVar sml
         Just 1 @=? fmap length subs
         return ()
+
+
+postSpawnMaskingState :: HU.Test
+postSpawnMaskingState = "spawn: check masking state is Unmasked after spawn" ~: test
+  where
+    test = do
+      env <- makeManaged duffRoutingTable
+      manager `manage` env
+
+    manager = do
+      spawn $ liftIO (threadDelay 1000000)
+      liftIO $ do
+        ms <- getMaskingState
+        Unmasked @=? ms
+      
       
 
 exceptionTests :: HU.Test
