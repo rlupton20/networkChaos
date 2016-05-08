@@ -3,11 +3,7 @@ module Routing.Routing
 ( makeRouter ) where
 
 import Types
-  
 import Routing.RoutingTable
-
-import Control.Concurrent.STM (atomically)
-import Control.Concurrent.STM.TQueue
 
 import qualified Data.ByteString as B
 
@@ -27,10 +23,10 @@ routeWith :: Packet -> RoutingTable -> IO ()
 routeWith bs rt = do
   redir <- lookup bs
   case redir of
-    Just rchan -> atomically $ writeTQueue rchan bs
+    Just rchan -> bs `passTo` rchan
     Nothing -> return ()
   where
-    lookup :: Packet -> IO (Maybe (TQueue B.ByteString))
+    lookup :: Packet -> IO (Maybe PacketQueue)
     lookup bs = do
       let dest = getDest bs
       redirect <- dest `getDirectionWith` rt

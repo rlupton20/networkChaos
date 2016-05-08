@@ -10,7 +10,7 @@ import Routing.Routing
 import Routing.RoutingTable
 
 import Relay.Relay
-import Relay.Debug
+--import Relay.Debug
 
 import Types
 import Utils
@@ -22,7 +22,7 @@ import Command.Types
 import Command.CliTypes
 import Command.CommandLine
 
-import System.Environment
+import System.Environment (getArgs)
 import Control.Monad
 import Control.Monad.IO.Class
 

@@ -3,10 +3,7 @@ module Utils
 ( readM ) where
 
 import Text.Read
-
 import Data.Word
-
-import Control.Exception
 
 readM :: (Read a, Monad m) => String -> m a
 readM str = do

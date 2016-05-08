@@ -10,14 +10,14 @@ import Control.Concurrent.STM.TQueue
 import qualified Data.Map as M
 
 data RoutingTable = RT { ipadd :: (TVar Addr)
-                       , inject :: PacketQueue
-                       , table :: TVar (M.Map Addr (Addr, TQueue Packet))}
+                       , inject :: Injector
+                       , table :: TVar (M.Map Addr (Addr, PacketQueue))}
 
 
 -- |newRoutingTable takes an Injector (a blue print for a thread
 -- which can be used to put packets back into the system), and
 -- creates an empty RoutingTable which uses that Injector.
-newRoutingTable :: PacketQueue -> IO RoutingTable
+newRoutingTable :: Injector -> IO RoutingTable
 newRoutingTable inj = do
   ipadd <- newTVarIO $ addrW8 0 0 0 0
   tab <- newTVarIO $ M.empty
@@ -39,17 +39,17 @@ delRouteFor RT{..} ad = atomically $ modifyTVar' table (M.delete ad)
 
 -- |getDirectionWithSTM is the STM version of looking up an endpoint in a
 -- Routing Table.
-getDirectionWithSTM :: Addr -> RoutingTable -> STM (Maybe (Addr, TQueue Packet))
+getDirectionWithSTM :: Addr -> RoutingTable -> STM (Maybe (Addr, PacketQueue))
 getDirectionWithSTM dest RT{..} = do
   rt <- readTVar table
   let newdest = dest `M.lookup` rt 
   return newdest
 
 -- |getDirectionWith is the atomic (IO) version of getDirectionWithSTM.
-getDirectionWith :: Addr -> RoutingTable -> IO (Maybe (Addr, TQueue Packet))
+getDirectionWith :: Addr -> RoutingTable -> IO (Maybe (Addr, PacketQueue))
 getDirectionWith ad rt = atomically $ getDirectionWithSTM ad rt
 
 -- |getInjector returns the Injector associated with a RoutingTable
-getInjector :: RoutingTable -> PacketQueue
+getInjector :: RoutingTable -> Injector
 getInjector RT{..} = inject
 
