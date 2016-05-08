@@ -14,7 +14,7 @@ import qualified Data.ByteString as B
 -- |Takes an injection ProcUnit (Injector), and launches a new
 -- routing ProcUnit, after creating a new routing table which it
 -- uses. The routing table is also returned.
-makeRouter :: Injector -> IO (Packet -> IO (), RoutingTable)
+makeRouter :: PacketQueue -> IO (Packet -> IO (), RoutingTable)
 makeRouter inj = do
   table <- newRoutingTable inj
   let route x = x `routeWith` table

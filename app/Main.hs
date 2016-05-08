@@ -50,15 +50,17 @@ main = do
 
 core :: TunTap -> String -> Stack ()
 core tt ip = do
-  injector <- specInjector tt
-  register $ build injector
+  (injectQueue, injector) <- specInjector tt
+  register $ injector
 
-  (router, rt) <- specRouter injector ip
-  register $ build router
+  (router, routeQueue, rt) <- specRouter injectQueue ip
+  register $ router
   
   -- Now we build the packet reader
-  let reader = (readTT tt) `makeWorkSourceOf` router
-  register $ blocksInForeign (build reader)
+  let reader = forever $ do
+        bs <- (readTT tt)
+        bs `passTo`routeQueue
+  register $ blocksInForeign reader
 
   -- Now we build the management system
   (manager, env) <- specManager rt
@@ -71,20 +73,25 @@ core tt ip = do
   
   where
 
-    specInjector :: TunTap -> Stack Injector
-    specInjector tt = liftIO $ newWorker $ \bs -> do
-      putStrLn.show $ parseIP4 bs
-      writeTT tt bs
+    specInjector :: TunTap -> Stack (PacketQueue, IO ())
+    specInjector tt = liftIO $ do
+      pq <- newQueue
+      let injector = forever $ do
+            bs <- readQueue pq
+            putStrLn.show $ parseIP4 bs
+            writeTT tt bs
+      return (pq, injector)
 
     specRouter :: Injector -> String ->
-                   Stack (Worker Packet, RoutingTable)
-    specRouter injector ip = liftIO $ do
-      (route, rt) <- makeRouter injector
-      router <- newWorker route
+                   Stack (IO (), PacketQueue, RoutingTable)
+    specRouter injectQueue ip = liftIO $ do
+      routingQueue <- newQueue
+      (route, rt) <- makeRouter injectQueue
       -- Setup the routing table
       myad <- addr ip
       rt `setAddr` myad
-      return (router, rt)
+      let router = forever $ readQueue routingQueue >>= route
+      return (router, routingQueue, rt)
 
     specManager :: RoutingTable -> Stack (IO (), Environment)
     specManager rt = liftIO $ do

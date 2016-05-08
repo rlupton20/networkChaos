@@ -10,14 +10,14 @@ import Control.Concurrent.STM.TQueue
 import qualified Data.Map as M
 
 data RoutingTable = RT { ipadd :: (TVar Addr)
-                       , inject :: Injector
+                       , inject :: PacketQueue
                        , table :: TVar (M.Map Addr (Addr, TQueue Packet))}
 
 
 -- |newRoutingTable takes an Injector (a blue print for a thread
 -- which can be used to put packets back into the system), and
 -- creates an empty RoutingTable which uses that Injector.
-newRoutingTable :: Injector -> IO RoutingTable
+newRoutingTable :: PacketQueue -> IO RoutingTable
 newRoutingTable inj = do
   ipadd <- newTVarIO $ addrW8 0 0 0 0
   tab <- newTVarIO $ M.empty
@@ -50,6 +50,6 @@ getDirectionWith :: Addr -> RoutingTable -> IO (Maybe (Addr, TQueue Packet))
 getDirectionWith ad rt = atomically $ getDirectionWithSTM ad rt
 
 -- |getInjector returns the Injector associated with a RoutingTable
-getInjector :: RoutingTable -> Injector
+getInjector :: RoutingTable -> PacketQueue
 getInjector RT{..} = inject
 

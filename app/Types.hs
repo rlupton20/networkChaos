@@ -1,23 +1,35 @@
 {-# LANGUAGE BangPatterns #-}
 module Types
 ( Addr
-, addr
 , addrW8
 , renderAddr
+, addr
+, Queue
 , Packet
-, Worker
-, Injector ) where
+, PacketQueue
+, Injector
+, passTo
+, newQueue
+, readQueue) where
 
-import Utils
 import Control.IO.Builder
+
+import Utils (readM)
 
 import Data.Word
 import qualified Data.ByteString as B
+import Control.Concurrent.STM
+import Control.Concurrent.STM.TQueue
 
 -- |Addr is a type for holding IP addresses. It is the same as the
 -- type from network-house (note, the Show and Read instances are
 -- different).
 data Addr = Addr {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 deriving (Eq, Ord, Show, Read)
+
+-- |addrW8 takes four Word8s and uses them to build an Addr
+-- e.g. addrW8 1 2 3 4 corresponds to 1.2.3.4
+addrW8 :: Word8 -> Word8 -> Word8 -> Word8 -> Addr
+addrW8 !a !b !c !d = Addr a b c d
 
 -- |renderAddr turns an Addr into a string in the way we would
 -- normally expect. Mostly useful for debugging and testing.
@@ -36,14 +48,17 @@ addr str = do
   let !ad = Addr a b c d
   return ad
 
--- |addrW8 takes four Word8s and uses them to build an Addr
--- e.g. addrW8 1 2 3 4 corresponds to 1.2.3.4
-addrW8 :: Word8 -> Word8 -> Word8 -> Word8 -> Addr
-addrW8 !a !b !c !d = Addr a b c d
 
+type Queue a = TQueue a
 type Packet = B.ByteString
+type PacketQueue = Queue Packet
+type Injector = PacketQueue
 
--- |Injector is just a more descriptive name for the type which
--- wraps a ProcUnit which puts packets (ByteStrings) back into
--- a network device.
-type Injector = Worker Packet
+passTo :: a -> Queue a -> IO ()
+passTo x q = atomically $ writeTQueue q x
+
+newQueue :: IO (Queue a)
+newQueue = newTQueueIO
+
+readQueue :: Queue a -> IO a
+readQueue = atomically . readTQueue

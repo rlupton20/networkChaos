@@ -29,5 +29,5 @@ makeRelay con injector outbound = do
     inFrom :: (Connection a) => Injector -> a -> IO ()
     inFrom injector conn = forever $ do
       bs <- receiveOn conn
-      bs `passWork` injector
+      bs `passTo` injector
                     
