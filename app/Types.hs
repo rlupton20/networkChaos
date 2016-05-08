@@ -12,8 +12,6 @@ module Types
 , newQueue
 , readQueue) where
 
-import Control.IO.Builder
-
 import Utils (readM)
 
 import Data.Word

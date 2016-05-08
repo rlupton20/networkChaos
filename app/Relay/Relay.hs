@@ -2,7 +2,6 @@ module Relay.Relay
 ( makeRelay ) where
 
 import Types
-import Utils (passWork)
   
 import Relay.Connection
 

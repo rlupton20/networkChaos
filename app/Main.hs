@@ -14,7 +14,6 @@ import Relay.Debug
 
 import Types
 import Utils
-import Control.IO.Builder
 
 import Command
 import Manager
