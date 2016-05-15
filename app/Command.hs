@@ -27,7 +27,6 @@ commander = do
   cmd <- liftIO $ getCommand cq
   if cmd == Quit then return () else process cmd >> commander
 
--- Need to keep track of spawned threads, and make exception safe
 process :: Command -> Manager ()
 process dc@(DirectConnection _ _ _ _) = spawn (direct dc) >> return ()
 process _ = liftIO $ error "Invalid command reached processor."

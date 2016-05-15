@@ -3,7 +3,7 @@ module Command.CommandLine
 
 import Command.CliTypes
 import Command.Interaction
-import Control.Monad.IO.Class
+import Control.Monad.IO.Class (liftIO)
 
 commandLine :: CLI ()
 commandLine = do
