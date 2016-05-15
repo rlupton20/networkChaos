@@ -3,7 +3,7 @@ module Relay.Connection
 , receiveOn
 , sendOn 
 , closeConn
-, resolveAddr  ) where
+, resolveAddress  ) where
 
 import qualified Data.ByteString as B
 import Network.Socket
@@ -14,8 +14,8 @@ class Connection a where
   closeConn :: a -> IO ()
 
 -- Utility function for resolving addresses
-resolveAddr :: String -> PortNumber -> IO SockAddr
-resolveAddr addr port = do
+resolveAddress :: String -> PortNumber -> IO SockAddr
+resolveAddress addr port = do
   addrInfo <- getAddrInfo Nothing (Just addr) (Just $ show port)
   let ads = map addrAddress addrInfo
   return $ head ads
