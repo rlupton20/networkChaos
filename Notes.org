@@ -204,13 +204,15 @@ here.
 *** TODO Config
 *** TODO Control
 *** TODO Debug
-*** TODO Main.hs
+*** DONE Main.hs
+Launches the program, specified as a Stack (). Loads and parses the
+configuration file.
 *** TODO Manager
 *** TODO Network
 *** TODO Relay
-*** TODO Routing
+*** DONE Routing
 **** DONE Routing.hs
 Contains functions to build routers and route packets.
-**** RoutingTable.hs / Internal.hs
+**** DONE RoutingTable.hs / Internal.hs
 Contains functions for building and manipulating routing tables.
 *** TODO Types.hs/Utils.hs

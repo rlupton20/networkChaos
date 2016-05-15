@@ -1,5 +1,9 @@
 module Main where
 
+import System.Environment (getArgs)
+import Control.Monad (forever)
+import Control.Monad.IO.Class (liftIO)
+
 import Config
 
 import Network.TunTap
@@ -8,24 +12,17 @@ import Control.Concurrent.Stack
 
 import Routing.Routing
 import Routing.RoutingTable
-
 import Relay.Relay
---import Relay.Debug
 
-import Types
-import Utils
-
-import Command
 import Manager
 
+import Command
 import Command.Types
 import Command.CliTypes
 import Command.CommandLine
 
-import System.Environment (getArgs)
-import Control.Monad
-import Control.Monad.IO.Class
-
+import Types
+import Utils
 
 -- Only needed when setting up router
 import Debug.PacketParsing.IP4 (parseIP4)
@@ -46,23 +43,25 @@ main = do
       withTUN dev $ \tun -> runStack (core tun myip)
   
 
-
+-- |core is a specification of the critical spine of the program.
+-- The core threads are specified here, and run using runStack
+-- in main.
 core :: TunTap -> String -> Stack ()
 core tt ip = do
   (injectQueue, injector) <- specInjector tt
   register $ injector
 
-  (router, routeQueue, rt) <- specRouter injectQueue ip
+  (router, routeQueue, table) <- specRouter injectQueue ip
   register $ router
   
   -- Now we build the packet reader
   let reader = forever $ do
         bs <- (readTT tt)
-        bs `passTo`routeQueue
+        bs `passTo` routeQueue
   register $ blocksInForeign reader
 
   -- Now we build the management system
-  (manager, env) <- specManager rt
+  (manager, env) <- specManager table
   register manager
 
   -- Lastly we start the command line
@@ -77,7 +76,7 @@ core tt ip = do
       pq <- newQueue
       let injector = forever $ do
             bs <- readQueue pq
-            putStrLn.show $ parseIP4 bs
+            putStrLn.show $ parseIP4 bs -- DEBUGGING
             writeTT tt bs
       return (pq, injector)
 
@@ -85,14 +84,14 @@ core tt ip = do
                    Stack (IO (), PacketQueue, RoutingTable)
     specRouter injectQueue ip = liftIO $ do
       routingQueue <- newQueue
-      (route, rt) <- makeRouter injectQueue
+      (route, table) <- makeRouter injectQueue
       -- Setup the routing table
-      myad <- addr ip
-      rt `setAddr` myad
+      ad <- addr ip
+      table `setAddr` ad
       let router = forever $ readQueue routingQueue >>= route
-      return (router, routingQueue, rt)
+      return (router, routingQueue, table)
 
     specManager :: RoutingTable -> Stack (IO (), Environment)
-    specManager rt = liftIO $ do
-      env <- makeManaged rt
+    specManager table = liftIO $ do
+      env <- makeManaged table
       return $ (commander `manage` env, env)
