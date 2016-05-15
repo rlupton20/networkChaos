@@ -124,7 +124,7 @@ If the TUN devices MTU (Maximum Transmission Unit) is set low enough, then enoug
 Wrapping Async might be the best way
 ** DONE Make Manager spawn exception safe threads
 Custom async spawning system, with a culling thread removing dead submanagers from a list.
-** TODO Tidy and check overall excpetion safety
+** TODO Tidy and check overall exception safety
 Probably will follow from the above.
 
 ** TODO Make typing of Stack and manage make some sense
@@ -201,18 +201,25 @@ here.
 *** Document what each file contains
 *** Individual sections
 *** TODO Command
-*** TODO Config
+*** DONE Config
+**** DONE Config
+Contains parser function and parsing instances for various
+configuration data types.
+**** DONE Config.Types
+Contains algebraic datatypes for various configuration objects.
 *** TODO Control
+**** DONE Concurrent.Stack
+Control structures for threads which depend uppon one another.
 *** TODO Debug
-*** DONE Main.hs
+*** DONE Main
 Launches the program, specified as a Stack (). Loads and parses the
 configuration file.
 *** TODO Manager
 *** TODO Network
 *** TODO Relay
 *** DONE Routing
-**** DONE Routing.hs
+**** DONE Routing
 Contains functions to build routers and route packets.
-**** DONE RoutingTable.hs / Internal.hs
+**** DONE RoutingTable /RoutingTable. Internal
 Contains functions for building and manipulating routing tables.
 *** TODO Types.hs/Utils.hs

@@ -5,16 +5,18 @@ module Control.Concurrent.Stack
 , runStack
 , blocksInForeign ) where
 
-import Control.Concurrent (threadDelay)
-import Control.Concurrent.Async
+import Control.Concurrent (threadDelay) -- TEST
+import Control.Concurrent.Async (Async, async, withAsync
+                                , wait, waitAny, waitCatch)
 
-import Control.Concurrent.STM
-import Control.Concurrent.STM.TVar
-import Control.Exception
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TVar (TVar, newTVarIO
+                                   , readTVarIO, modifyTVar')
+import Control.Exception (finally, mask)
 
-import Control.Monad
-import Control.Monad.Trans.State
-import Control.Monad.IO.Class
+import Control.Monad (forever)
+import Control.Monad.Trans.State (StateT, runStateT, modify')
+import Control.Monad.IO.Class (liftIO)
 
 type ProcStack = [IO ()]
 type Stack = StateT ProcStack IO
@@ -36,8 +38,8 @@ buildStack ls = runStateT ls []
 -- created by the Stack are killed, and all exception handlers
 -- are allowed to run.
 runStack :: Stack a -> IO a
-runStack stck = do
-  (val, ios) <- buildStack stck
+runStack stack = do
+  (v, ios) <- buildStack stack
   reg <- newTVarIO []
 
   -- Now we run the stack, ensuring that if the Stack
@@ -45,7 +47,7 @@ runStack stck = do
   -- run.
   launchStack reg ios [] `finally`
     ( do as <- readTVarIO reg; sequence $ map waitCatch as )    
-  return val
+  return v
   where
     launchStack _ [] ws = waitAny ws
     launchStack reg (s:ss) ws = withRegisteredAsync reg s $ \w ->

@@ -21,7 +21,17 @@ executable vanguard
   other-modules:       Routing.Routing
                      , Routing.RoutingTable
                      , Routing.RoutingTable.Internal
-  other-extensions:    BangPatterns, OverloadedStrings, ForeignFunctionInterface, PackageImports, RecordWildCards, ExistentialQuantification, RankNTypes, DeriveDataTypeable
+                     , Config
+                     , Config.Types
+                     , Control.Concurrent.Stack
+  other-extensions:    BangPatterns
+                     , OverloadedStrings
+                     , ForeignFunctionInterface
+                     , PackageImports
+                     , RecordWildCards
+                     , ExistentialQuantification
+                     , RankNTypes
+                     , DeriveDataTypeable
   build-depends:       base
                      , stm
                      , async
