@@ -5,25 +5,25 @@ import Types
 import Relay.Connection
 
 import Control.Monad
-import Control.Concurrent.Async
+import Control.Concurrent.Async (race_)
 
--- |makeRelay takes a connection, and a Queue to put inbound packets,
--- and forks two sibling threads which can send and receive packets. It
--- returns a Queue on which to place outgoing packets. The connection
--- is closed in the event of an exception, or the failure of one of the
--- send or receive threads.
+-- |makeRelay takes a connection, a Queue on which to put inbound
+-- packets (an Injector), and a Queue on which to put outbound packets.
+-- It then forks two sibling threads, one of which receives packets
+-- and puts them on the inbound Queue (Injector), and the other which
+-- takes packets off of the outbound Queue and sends them. If one of the
+-- threads terminates, so does the other.
 makeRelay :: (Connection a) =>  a -> Injector -> PacketQueue ->  IO ()
-makeRelay con injector outbound = do
-  race_ (outbound `outOn` con) (injector `inFrom` con)
+makeRelay connection injector outbound = do
+  race_ (outbound `outOn` connection) (injector `inFrom` connection)
   where
-    
     outOn :: (Connection a) => PacketQueue -> a -> IO ()
-    outOn q conn = forever $ do
+    outOn q connection = forever $ do
       bs <- readQueue q
-      bs `sendOn` conn
+      bs `sendOn` connection
 
     inFrom :: (Connection a) => Injector -> a -> IO ()
-    inFrom injector conn = forever $ do
-      bs <- receiveOn conn
+    inFrom injector connection = forever $ do
+      bs <- receiveOn connection
       bs `passTo` injector
                     
