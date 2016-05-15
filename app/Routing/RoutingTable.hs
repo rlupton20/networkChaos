@@ -6,6 +6,7 @@ module Routing.RoutingTable
 , newRoute
 , delRouteFor
 , getDirectionWith
+, getOutChannelFrom
 , getInjector ) where
 
 -- This is an interface file for Routing.RoutingTable.Internal

@@ -18,9 +18,26 @@ cabal-version:       >=1.10
 
 executable vanguard
   main-is:             Main.hs
-  -- other-modules:       
+  other-modules:       Routing.Routing
+                     , Routing.RoutingTable
+                     , Routing.RoutingTable.Internal
   other-extensions:    BangPatterns, OverloadedStrings, ForeignFunctionInterface, PackageImports, RecordWildCards, ExistentialQuantification, RankNTypes, DeriveDataTypeable
-  build-depends:       base >=4.6 && <5.0, stm >=2.4 && <2.5, async >=2.0 && <3.0, mtl >=2.2 && <2.3, transformers >=0.4 && <0.5, bytestring >=0.10 && <0.11, network >=2.6 && <2.7, cereal >=0.4 && <1, unbounded-delays >=0.1 && <0.2, unix >=2.6 && <3, containers >=0.5 && <0.6, network-house >=0.1 && <0.2, unix-bytestring >= 0.3, stunclient >=0.1 && <0.2, haskell-etcd, yaml
+  build-depends:       base
+                     , stm
+                     , async
+                     , mtl
+                     , transformers
+                     , bytestring
+                     , network
+                     , cereal
+                     , unbounded-delays
+                     , unix
+                     , containers
+                     , network-house
+                     , unix-bytestring
+                     , stunclient
+                     , haskell-etcd
+                     , yaml
   hs-source-dirs:      app
   c-sources:	       app/Network/tuntap.c
   ghc-options:	       -O2 -threaded

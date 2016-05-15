@@ -2,15 +2,15 @@
 module Routing.Routing
 ( makeRouter ) where
 
+import qualified Data.ByteString as B
+  
 import Types
 import Routing.RoutingTable
 
-import qualified Data.ByteString as B
-
--- |Takes an injection ProcUnit (Injector), and launches a new
--- routing ProcUnit, after creating a new routing table which it
--- uses. The routing table is also returned.
-makeRouter :: PacketQueue -> IO (Packet -> IO (), RoutingTable)
+-- |Takes an Injector (PacketQueue), and creates a new
+-- routing table, returning this routing table along with
+-- a description of an IO process for routing packets.
+makeRouter :: Injector -> IO (Packet -> IO (), RoutingTable)
 makeRouter inj = do
   table <- newRoutingTable inj
   let route x = x `routeWith` table
@@ -21,17 +21,16 @@ makeRouter inj = do
 -- the RoutingTable for lookup.
 routeWith :: Packet -> RoutingTable -> IO ()
 routeWith bs rt = do
-  redir <- lookup bs
-  case redir of
-    Just rchan -> bs `passTo` rchan
+  dest <- lookup bs
+  case dest of
+    Just outchan -> bs `passTo` outchan
     Nothing -> return ()
   where
     lookup :: Packet -> IO (Maybe PacketQueue)
     lookup bs = do
       let dest = getDest bs
-      redirect <- dest `getDirectionWith` rt
-      return $ fmap snd redirect
-
+      dest `getOutChannelFrom` rt
+      
     getDest :: Packet -> Addr
     getDest bs = let a = bs `B.index` 16
                      b = bs `B.index` 17

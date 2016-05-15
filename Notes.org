@@ -138,3 +138,79 @@ Small VPN for creating mesh networks. No server client structure.
 To crash the culling thread of a Manager monad transformer stack, add an undefined SubManager.
 To crash a manager, make it evaluate something undefined.
 Fine grained crashing may be difficult to achieve.
+* May 2016 Tidy
+** File structure
+app/
+├── Command
+│   ├── CliTypes.hs
+│   ├── CommandLine.hs
+│   ├── Interaction.hs
+│   └── Types.hs
+├── Command.hs
+├── Config
+│   └── Types.hs
+├── Config.hs
+├── Control
+│   └── Concurrent
+│       └── Stack.hs
+├── Debug
+│   └── PacketParsing
+│       ├── Ether.hs
+│       ├── IP4.hs
+│       └── Parsing.hs
+├── Main.hs
+├── Manager
+│   ├── Manage.hs
+│   ├── Manager.hs
+│   └── Types.hs
+├── Manager.hs
+├── Network
+│   ├── tuntap.c
+│   ├── tuntap.h
+│   ├── TunTap.hi
+│   ├── TunTap.hs
+│   ├── tuntap.o
+│   └── TunTap.o
+├── Relay
+│   ├── Connection.hs
+│   ├── Debug.hs
+│   ├── Interface.hs
+│   ├── Relay.hs
+│   └── Stun.hs
+├── Routing
+│   ├── Routing.hs
+│   ├── RoutingTable
+│   │   └── Internal.hs
+│   └── RoutingTable.hs
+├── Types.hs
+└── Utils.hs
+** Tasks
+*** Import namespaces
+
+All library functions should be imported with namespaces. This allows
+us to use more obvious variable names in the source.
+
+*** Variable and datatype naming
+Typically not very uniform, and quite hard to read. Short names are
+good, but often one finds oneself doing some processing of some input,
+and its not clear what to call this input. Maybe some factoring is
+required to avoid these steps, or maybe good names or datatype
+wrappers can be used to clear this up. Namespaced imports may help
+here.
+
+*** Document what each file contains
+*** Individual sections
+*** TODO Command
+*** TODO Config
+*** TODO Control
+*** TODO Debug
+*** TODO Main.hs
+*** TODO Manager
+*** TODO Network
+*** TODO Relay
+*** TODO Routing
+**** DONE Routing.hs
+Contains functions to build routers and route packets.
+**** RoutingTable.hs / Internal.hs
+Contains functions for building and manipulating routing tables.
+*** TODO Types.hs/Utils.hs
