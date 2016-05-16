@@ -200,26 +200,28 @@ here.
 
 *** Document what each file contains
 *** Individual sections
-*** TODO Command
-*** DONE Config
+**** TODO Command
 **** DONE Config
+***** DONE Config
 Contains parser function and parsing instances for various
 configuration data types.
-**** DONE Config.Types
+***** DONE Config.Types
 Contains algebraic datatypes for various configuration objects.
-*** TODO Control
-**** DONE Concurrent.Stack
+**** DONE Control
+***** DONE Concurrent.Stack
 Control structures for threads which depend uppon one another.
-*** TODO Debug
-*** DONE Main
+**** TODO Debug
+**** DONE Main
 Launches the program, specified as a Stack (). Loads and parses the
 configuration file.
-*** TODO Manager
-*** TODO Network
-*** TODO Relay
-*** DONE Routing
+**** TODO Manager
+**** TODO Network
+**** TODO Relay
 **** DONE Routing
+***** DONE Routing
 Contains functions to build routers and route packets.
-**** DONE RoutingTable /RoutingTable. Internal
+***** DONE RoutingTable /RoutingTable. Internal
 Contains functions for building and manipulating routing tables.
-*** TODO Types.hs/Utils.hs
+**** DONE Types.hs/Utils.hs
+Types.hs and Utils.hs could use a little rearranging. They contain
+types and functions for ubiquitous data.

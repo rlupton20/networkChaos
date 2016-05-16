@@ -12,12 +12,13 @@ module Types
 , newQueue
 , readQueue) where
 
-import Utils (readM)
-
-import Data.Word
 import qualified Data.ByteString as B
-import Control.Concurrent.STM
-import Control.Concurrent.STM.TQueue
+import Data.Word (Word8)
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TQueue (TQueue, newTQueueIO
+                                     , readTQueue, writeTQueue)
+  
+import Utils (readM)
 
 -- |Addr is a type for holding IP addresses. It is the same as the
 -- type from network-house (note, the Show and Read instances are
@@ -25,7 +26,7 @@ import Control.Concurrent.STM.TQueue
 data Addr = Addr {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 deriving (Eq, Ord, Show, Read)
 
 -- |addrW8 takes four Word8s and uses them to build an Addr
--- e.g. addrW8 1 2 3 4 corresponds to 1.2.3.4
+-- e.g. addrW8 1 2 3 4 is the address 1.2.3.4
 addrW8 :: Word8 -> Word8 -> Word8 -> Word8 -> Addr
 addrW8 !a !b !c !d = Addr a b c d
 
@@ -46,6 +47,9 @@ addr str = do
   let !ad = Addr a b c d
   return ad
 
+-- Internally threads have queues of packets which we must process.
+-- Here we abstract away the underlying types and provide interface
+-- functions for creating, reading and writing to these queues.
 
 type Queue a = TQueue a
 type Packet = B.ByteString

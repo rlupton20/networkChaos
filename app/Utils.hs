@@ -2,8 +2,7 @@
 module Utils
 ( readM ) where
 
-import Text.Read
-import Data.Word
+import Text.Read (readMaybe)
 
 readM :: (Read a, Monad m) => String -> m a
 readM str = do
