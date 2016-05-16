@@ -39,7 +39,8 @@ addrConversionRuns :: [(String, String, Maybe Addr)]
 addrConversionRuns = [ ("addr: doesn't convert \"String\"", 	   "String", Nothing)
 		     , ("addr: addr and addrW8 agree", 		   "1.2.34.123", Just $ addrW8 1 2 34 123)
 		     , ("addr: fail on \"1.43.t.90\"",		   "1.43.t.90", Nothing) 
-		     , ("addr: fails on \"...\"",		   "...", Nothing) ]
+		     , ("addr: fails on \"...\"",		   "...", Nothing)
+                     , ("addr: fails on \"1.2.3.4.5\"",            "1.2.3.4.5", Nothing) ]
 
 
 -- |addrUnitTests is the collection of unit tests for addr (built using
