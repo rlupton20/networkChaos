@@ -1,8 +1,14 @@
-module Command.Types where
+module Command.Types
+( CommandQueue
+, Command(..)
+, getCommand
+, postCommand
+, newCommandQueue )where
 
-import Control.Concurrent.STM
-import Control.Concurrent.STM.TMVar
-import Control.Concurrent.STM.TQueue
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TMVar (TMVar)
+import Control.Concurrent.STM.TQueue ( TQueue, newTQueueIO
+                                     , readTQueue, writeTQueue )
 
 -- |CommandQueue is an abstraction of the programs internal list of
 -- pending commands.

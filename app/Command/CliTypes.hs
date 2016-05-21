@@ -3,8 +3,8 @@ module Command.CliTypes
 , CLI
 , runCli ) where
 
-import Command.Types
-import Control.Monad.Trans.Reader
+import Command.Types (Command)
+import Control.Monad.Trans.Reader (ReaderT, runReaderT)
 
 data CliComm = CliComm { sendCommand :: Command -> IO () }
 

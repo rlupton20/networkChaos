@@ -200,7 +200,7 @@ here.
 
 *** Document what each file contains
 *** Individual sections
-**** TODO Command
+**** DONE Command
 **** DONE Config
 ***** DONE Config
 Contains parser function and parsing instances for various

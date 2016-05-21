@@ -24,6 +24,13 @@ executable vanguard
                      , Config
                      , Config.Types
                      , Control.Concurrent.Stack
+                     , Types
+                     , Utils
+                     , Command
+                     , Command.Types
+                     , Command.CliTypes
+                     , Command.Interaction
+                     , Command.CommandLine
   other-extensions:    BangPatterns
                      , OverloadedStrings
                      , ForeignFunctionInterface
