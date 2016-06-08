@@ -1,18 +1,23 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes, RecordWildCards, DeriveDataTypeable #-}
 module Manager.Manage where
 
+import Control.Concurrent (ThreadId, myThreadId)
+import Control.Concurrent.Async ( Async, async, cancel
+                                , waitCatch, waitCatchSTM )
+import Control.Concurrent.STM ( STM, atomically, retry, orElse, newTVarIO
+                              , readTVar, writeTVar, swapTVar )
+
+import Control.Exception ( Exception, throwTo, throwIO, try, catch, mask
+                         , SomeException, AsyncException(ThreadKilled)
+                         , fromException )
+
+import Control.Monad (forever)
+import Control.Monad.Trans.Reader (ReaderT, runReaderT)
+
+import Data.Typeable (Typeable)
+
 import Manager.Types
 
-import Control.Concurrent
-import Control.Concurrent.Async
-import Control.Concurrent.STM
-
-import Control.Exception
-
-import Control.Monad
-import Control.Monad.Trans.Reader
-
-import Data.Typeable
 
 data CullCrash = CullCrash deriving (Eq, Show, Typeable)
 instance Exception CullCrash
@@ -32,7 +37,7 @@ manage m env = do
       -- If our manager has crashed with some exception, then we pass the
       -- exception to a handler to do the cleanup.
       Left e -> handleException e subs culler
-      -- Otherwise, our manager ran successfuly, and there is nothing left
+      -- Otherwise, our manager ran successfully, and there is nothing left
       -- to do, so cleanup any remaining child (submanager) threads.
       Right _ -> do
         cancel culler
@@ -55,10 +60,10 @@ manage m env = do
 
     -- handleException has the task of cleaning up. There are two cases:
     -- 1) either our culling thread crashed and sent us an exception, in
-    --    which case cullProc is already dealing with an exception and we
+    --    which case culler is already dealing with an exception and we
     --    just need to wait for it to do its cleanup.
-    -- 2) something went wrong in the manager itself, and cullProc doesn't
-    --    know about this, so we need to cancel the cullProc thread manually,
+    -- 2) something went wrong in the manager itself, and culler doesn't
+    --    know about this, so we need to cancel the culler thread manually,
     --    and wait for it to do cleanup.
     -- We deal with these two cases separately. In both cases, the submanagers
     -- need cleaning up.
@@ -109,7 +114,7 @@ cull sml = atomically $ do
 -- |divideSubmanagers takes a list of SubManagers and returns two lists:
 -- one a list of completed submanagers, and the other a list of those
 -- still running. Ordering of lists is not guaranteed to be preserved.
--- Will block if nothing has finished running
+-- Will block if nothing has finished running.
 divideSubmanagers :: [Submanager] -> STM ([Submanager],[Submanager])
 divideSubmanagers submanagers = go [] [] submanagers
   where

@@ -22,7 +22,7 @@ IPPROTO_RAW is protocol number 255.
 Operating System's package manager
 ** pcap
 cabal install pcap
-** dummy kernal module
+** dummy kernel module
 Should be preinstalled
 ** network-house package
 cabal-install network-house
@@ -133,11 +133,6 @@ Small VPN for creating mesh networks. No server client structure.
 * Cabal file specifics
   c-sources:	       src/Network/tuntap.c
   ghc-options:	       -O2 -threaded
-* Test ideas
-** Manager
-To crash the culling thread of a Manager monad transformer stack, add an undefined SubManager.
-To crash a manager, make it evaluate something undefined.
-Fine grained crashing may be difficult to achieve.
 * May 2016 Tidy
 ** File structure
 app/
@@ -201,27 +196,82 @@ here.
 *** Document what each file contains
 *** Individual sections
 **** DONE Command
+     Command contains Manager instances which setup sockets for
+     communication with peers, and add entries to the routing table.
+
+     There are also functions which create a basic command line, and
+     specify a communication protocol with the Manager instances to do this.
+
 **** DONE Config
 ***** DONE Config
-Contains parser function and parsing instances for various
-configuration data types.
+      Contains parser function and parsing instances for various
+      configuration data types.
 ***** DONE Config.Types
-Contains algebraic datatypes for various configuration objects.
+      Contains algebraic datatypes for various configuration objects.
 **** DONE Control
 ***** DONE Concurrent.Stack
-Control structures for threads which depend uppon one another.
+      Control structures for threads which depend uppon one another.
 **** TODO Debug
 **** DONE Main
-Launches the program, specified as a Stack (). Loads and parses the
-configuration file.
-**** TODO Manager
+     Launches the program, specified as a Stack (). Loads and parses the
+     configuration file.
+**** DONE Manager
+***** DONE Manager.hs
+      Manager.hs contains interface functions for spawning new
+      Manager threads, and querying the environment.
+****** TODO Factor out submanager tracking?
+***** DONE Manage.hs
+       Defines a function to run a manager, and implements the
+       internal submanager thread tracking and exception handling
+       mechanisms.
 **** TODO Network
 **** TODO Relay
 **** DONE Routing
 ***** DONE Routing
-Contains functions to build routers and route packets.
+      Contains functions to build routers and route packets.
 ***** DONE RoutingTable /RoutingTable. Internal
-Contains functions for building and manipulating routing tables.
+      Contains functions for building and manipulating routing tables.
 **** DONE Types.hs/Utils.hs
-Types.hs and Utils.hs could use a little rearranging. They contain
-types and functions for ubiquitous data.
+     Types.hs and Utils.hs could use a little rearranging. They contain
+     types and functions for ubiquitous data.
+     
+* Ongoing tasks
+*** Ongoing
+**** Manage.hs
+     The code should be polished to make it as readable as possible.
+* Architectural overview
+  Here we present a basic overview of how the VPN works internally. We
+  start with an overview of the core of the application, before
+  looking more closely at how the individual components work.
+** Core components
+   At its core the VPN is just a router, consisting of a lookup table
+   describing a mapping of virtual addresses to enpoints. The core of the
+   application is heavily threaded, with packets (`ByteStrings`) passed
+   around on Queues between threads for processing. Threads in Haskell
+   are cheap (they are implemented as user space threads on top of a pool
+   of OS threads), and so they are used liberally, and Software
+   Transactional Memory provides exception safe threadsafe data passing.
+
+   There are several threads which form the backbone of the
+   application. If one of these fails, the entire application should fail
+   gracefully, and so they are specified as a linked data structure,
+   called a `Stack`. Running the stack consists of instantiating these
+   threads in such a way that an exception in one brings the rest down
+   cleanly. This is defined in Control.Concurrent.Stack.
+
+   Our stack of critical threads consists of the following:
+     1. the routing thread
+     2. a thread pulling packets off of a tun device
+     3. a thread putting packets on to a tun device
+     4. a root Manager instance --- connections are spawned from this
+        and the Queues (for thread communication) placed in the
+        routing table.
+     5. a command thread; this is presently a primitive command line
+        interface, but in the future will be more sophisticated,
+        looking to an external bootstrap node to gather information on
+        the network, and creating/authenticating connections etc.
+
+   The code for the routing, and reading and writing to the tun device
+   is reasonably straightforward. The tun device has a small C driver
+   which is interfaced to Haskell, and then operated with a bracketed
+   operation `withTUN`, which ensures exception safety.

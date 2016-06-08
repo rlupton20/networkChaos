@@ -26,6 +26,10 @@ executable vanguard
                      , Control.Concurrent.Stack
                      , Types
                      , Utils
+                     , Manager
+                     , Manager.Manager
+                     , Manager.Manage
+                     , Manager.Types
                      , Command
                      , Command.Types
                      , Command.CliTypes
@@ -64,6 +68,17 @@ test-suite vanguard-test
   type:			exitcode-stdio-1.0
   hs-source-dirs:	test, app
   main-is:		Spec.hs
+  other-modules:        ManagerTest
+                      , Manager.Manager
+                      , Manager.Manage
+                      , Manager.Types
+                      , Utils
+                      , TypesTest
+                      , Types
+                      , Routing.RoutingTableTest
+                      , Routing.RoutingTable
+                      , Routing.RoutingTable.Internal
+                      , Command.Types
   build-depends:	base
                       , HUnit
                       , QuickCheck

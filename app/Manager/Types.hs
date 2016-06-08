@@ -1,12 +1,12 @@
 module Manager.Types where
 
+import Control.Concurrent.Async ( Async )
+import Control.Concurrent.STM.TVar ( TVar )
+
+import Control.Monad.Trans.Reader ( ReaderT )
+
 import Routing.RoutingTable
 import Command.Types
-
-import Control.Concurrent.Async
-import Control.Concurrent.STM.TVar
-
-import Control.Monad.Trans.Reader
 
 data Environment = Environment { routingTable :: RoutingTable
                                , commandQueue :: CommandQueue }

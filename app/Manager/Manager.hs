@@ -1,25 +1,26 @@
 module Manager.Manager where
 
+import Control.Concurrent.STM (atomically, modifyTVar')
+import Control.Concurrent.Async (async)
+
+import Control.Monad.Trans (lift)
+import Control.Monad.Trans.Reader (ask, asks)
+import Control.Monad.IO.Class (liftIO)
+import Control.Exception (mask)
+
 import Manager.Types
 import Manager.Manage (manage)
 
 import Routing.RoutingTable
 import Command.Types
 
-import Control.Concurrent.STM
-import Control.Concurrent.Async
-
-import Control.Monad.Trans (lift)
-import Control.Monad.Trans.Reader
-import Control.Monad.IO.Class (liftIO)
-import Control.Exception
 
 -- |makeManaged takes a RoutingTable, and creates a fresh
 -- environment with which it can be managed.
 makeManaged :: RoutingTable -> IO Environment
-makeManaged rt = do
-  cq <- newCommandQueue
-  return $ Environment rt cq
+makeManaged table = do
+  commands <- newCommandQueue
+  return $ Environment table commands
 
 -- |spawn creates a new manager in a new thread. If the new manager
 -- crashes, it is caught by cull, and the exception is not propogated.
@@ -37,7 +38,7 @@ spawn manager = do
     a <- async (restore $ manager `manage` env)
     let m = Submanager a
     sml `track` m
-    restore (return $ Submanager a)
+    restore (return m)
     where
       track :: SubmanagerLog -> Submanager -> IO ()
       track sml m = atomically $ modifyTVar' sml $ fmap (m:)
