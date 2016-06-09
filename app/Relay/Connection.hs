@@ -6,7 +6,8 @@ module Relay.Connection
 , resolveAddress  ) where
 
 import qualified Data.ByteString as B
-import Network.Socket
+import qualified Network.Socket as S
+import Network.Socket (PortNumber, SockAddr)
 
 class Connection a where
   receiveOn :: a -> IO B.ByteString
@@ -16,6 +17,6 @@ class Connection a where
 -- Utility function for resolving addresses
 resolveAddress :: String -> PortNumber -> IO SockAddr
 resolveAddress addr port = do
-  addrInfo <- getAddrInfo Nothing (Just addr) (Just $ show port)
-  let ads = map addrAddress addrInfo
+  addrInfo <- S.getAddrInfo Nothing (Just addr) (Just $ show port)
+  let ads = map S.addrAddress addrInfo
   return $ head ads

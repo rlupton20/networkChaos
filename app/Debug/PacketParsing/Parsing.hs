@@ -1,7 +1,7 @@
 module Debug.PacketParsing.Parsing
 ( restruct ) where
 
-import Net.Packet
+import Net.Packet (InPacket, toInPack, listArray)
 
 import qualified Data.ByteString as B
 

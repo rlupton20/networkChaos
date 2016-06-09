@@ -11,17 +11,17 @@ module Network.TunTap
 , withTUN ) where
 
 import Foreign
-import Foreign.C.Types
-import Foreign.C.String
-import Foreign.Ptr
-import Foreign.Marshal.Array
+import Foreign.C.Types (CInt(..), CChar(..))
+import Foreign.C.String (peekCString, castCharToCChar)
+import Foreign.Ptr (Ptr(..))
+import Foreign.Marshal.Array (withArray, lengthArray0)
 
-import Data.List
-import Data.Bits
+import Data.List (foldl')
+import Data.Bits ((.|.))
 
-import System.Posix.Types
+import System.Posix.Types (Fd(..))
 import System.Posix.IO (closeFd)
-import "unix-bytestring" System.Posix.IO.ByteString
+import "unix-bytestring" System.Posix.IO.ByteString (fdRead, fdWrite)
 import qualified Data.ByteString as B
 
 import Control.Exception (bracket)
@@ -62,22 +62,22 @@ openTunTap tt name flags = allocaArray0 (fromIntegral c_ifnamsiz) $ \cstr -> do
       ccname = fmap (castCharToCChar) $ take (fromIntegral c_ifnamsiz - 1) name
 
   (fd, asname) <- withArray ccname $ \cname -> do
-                                     lname <- lengthArray0 cnul cname
-                                     -- Now remember to copy the null
-                                     -- character.
-                                     copyArray cstr cname (lname+1)
-                                     fd <- c_getTunTap cstr params
-                                     -- c_getTunTap writes the opened
-                                     -- device name back to cstr
-                                     asname <- peekCString cstr
-                                     return (fd, asname)
+    lname <- lengthArray0 cnul cname
+    -- Now remember to copy the null
+    -- character.
+    copyArray cstr cname (lname+1)
+    fd <- c_getTunTap cstr params
+    -- c_getTunTap writes the opened
+    -- device name back to cstr
+    asname <- peekCString cstr
+    return (fd, asname)
 
   -- Note that c_getTunTap might return a bad file descriptor
   -- (in the case of an error)
   if fd < 0 then
     (error $ "Couldn't open TUN device: " ++ name)
     else
-      putStrLn ("Opened device " ++ asname) >> return (Fd fd, asname)
+    putStrLn ("Opened device " ++ asname) >> return (Fd fd, asname)
 
 data TunTap = TunTap { name :: String
                      , tttype :: TTType

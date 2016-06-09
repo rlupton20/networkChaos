@@ -52,7 +52,7 @@ direct (DirectConnection lp' ad' po' vt') = do
       [address',port',virtual'] <- sequence $
         map (atomically.takeTMVar) [ad',po',vt']
       
-      resolve <- try $ connect udpsocket address' port' virtual' :: IO (Either SomeException (UDPConn, Addr, Addr))
+      resolve <- try $ connect udpsocket address' port' virtual' :: IO (Either SomeException (UDPConnection, Addr, Addr))
 
       case resolve of
         Left _ -> putStrLn "Error with input."
@@ -64,7 +64,7 @@ direct (DirectConnection lp' ad' po' vt') = do
       return ()
 
   where
-    connect :: UDPSock -> String -> String -> String -> IO (UDPConn, Addr, Addr)
+    connect :: UDPSocket -> String -> String -> String -> IO (UDPConnection, Addr, Addr)
     connect udpsocket address' port' virtual' = do
       address <- addr address'
       virtual <- addr virtual'

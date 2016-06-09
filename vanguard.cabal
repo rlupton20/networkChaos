@@ -35,6 +35,7 @@ executable vanguard
                      , Command.CliTypes
                      , Command.Interaction
                      , Command.CommandLine
+                     , Network.TunTap
   other-extensions:    BangPatterns
                      , OverloadedStrings
                      , ForeignFunctionInterface

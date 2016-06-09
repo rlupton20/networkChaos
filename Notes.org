@@ -225,7 +225,23 @@ here.
        internal submanager thread tracking and exception handling
        mechanisms.
 **** TODO Network
-**** TODO Relay
+**** DONE Relay
+***** DONE Connection.hs 
+      Contains the typeclass for abstracting away connections, and a
+      utility function for resolving addresses.
+***** Debug.hs
+      Contains a connection typeclass instance which is just standard
+      input and output. Not really used. Will probably be removed at
+      some point in the future.
+***** DONE Interface.hs 
+      Create UDP sockets, and turn them into abstract connections.
+***** DONE Relay.hs
+      Contains a function which spawns a send and receive thread which
+      reads from a queue of packets and writes to a queue of packets,
+      given a connection function.
+***** Stun.hs
+      Currently not in use, but contains experimental stubs for
+      creating STUNned connections.
 **** DONE Routing
 ***** DONE Routing
       Contains functions to build routers and route packets.
@@ -237,7 +253,7 @@ here.
      
 * Ongoing tasks
 *** Ongoing
-**** Manage.hs
+**** TODO Manage.hs
      The code should be polished to make it as readable as possible.
 * Architectural overview
   Here we present a basic overview of how the VPN works internally. We

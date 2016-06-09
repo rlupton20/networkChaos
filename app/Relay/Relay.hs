@@ -1,11 +1,12 @@
 module Relay.Relay
 ( makeRelay ) where
 
+
+import Control.Monad (forever)
+import Control.Concurrent.Async (race_)
+
 import Types  
 import Relay.Connection
-
-import Control.Monad
-import Control.Concurrent.Async (race_)
 
 -- |makeRelay takes a connection, a Queue on which to put inbound
 -- packets (an Injector), and a Queue on which to put outbound packets.
