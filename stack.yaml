@@ -2,11 +2,14 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-- location:
-    git: https://github.com/rlupton20/haskell-etcd
-    commit: 71229cdb475243d34bd722e78d89d9cbd1de592f
+#- location:
+#    git: https://github.com/rlupton20/haskell-etcd
+#    commit: 71229cdb475243d34bd722e78d89d9cbd1de592f
 extra-deps:
 - stringprep-1.0.0
 - stunclient-0.1.0.1
 - text-1.2.2.0
-resolver: lts-5.8
+resolver: lts-6.5
+
+docker:
+  enable: true

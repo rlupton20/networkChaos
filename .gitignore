@@ -12,6 +12,10 @@
 # Profiling files
 *.prof
 
+# .mix and .tix files for test coverage using hpc
+*.mix
+*.tix
+
 # Cabal sandboxes
 /.cabal-sandbox/*
 cabal.sandbox.config
