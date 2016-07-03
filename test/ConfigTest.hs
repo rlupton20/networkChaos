@@ -16,7 +16,7 @@ import Config.Types
 
 configTest :: TF.Test
 configTest = testGroup "Config.hs tests" $ hUnitTestToTests $ HU.TestList [ testCanParseNetConfig
-                                                                          , testCanParseBootstrap ]
+                                                                          , testCanParseOracle ]
 
 
 testCanParseNetConfig :: HU.Test
@@ -28,9 +28,9 @@ testCanParseNetConfig = "Can parse YAML for network information" ~: test
              do expected @=? parsed
 
 
-testCanParseBootstrap :: HU.Test
-testCanParseBootstrap = "Can parse YAML for bootstrap information" ~: test
+testCanParseOracle :: HU.Test
+testCanParseOracle = "Can parse YAML for oracle information" ~: test
   where test = let yaml = "address: test\nnode: auth.cert"
                    parsed = Y.decode yaml
-                   expected = Just $ Bootstrap "test" "auth.cert" in
+                   expected = Just $ OracleConfig "test" "auth.cert" in
                  do expected @=? parsed

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Config
 ( NetConfig(..)
-, Bootstrap(..)
+, OracleConfig(..)
 , VanguardConfig(..)
 , loadConfigFromFile
 ) where
@@ -13,15 +13,15 @@ import Control.Applicative ((<$>),(<*>),empty)
 import Config.Types
 
 instance Y.FromJSON VanguardConfig where
-  parseJSON (Y.Object v) = VanguardConfig <$> v .: "net" <*> v .: "bootstrap"
+  parseJSON (Y.Object v) = VanguardConfig <$> v .: "net" <*> v .: "oracle"
   parseJSON _ = empty
 
 instance Y.FromJSON NetConfig where
   parseJSON (Y.Object v) = NetConfig <$> v .: "device" <*> v .: "address"
   parseJSON _ = empty
 
-instance Y.FromJSON Bootstrap where
-  parseJSON (Y.Object v) = Bootstrap <$> v .: "address" <*> v .: "node"
+instance Y.FromJSON OracleConfig where
+  parseJSON (Y.Object v) = OracleConfig <$> v .: "address" <*> v .: "node"
   parseJSON _ = empty
 
 loadConfigFromFile :: String -> IO (Either Y.ParseException VanguardConfig)
