@@ -1,4 +1,3 @@
-
 module ManagerTest
 ( managerTest ) where
 
