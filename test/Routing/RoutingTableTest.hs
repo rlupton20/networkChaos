@@ -104,7 +104,7 @@ withRouteBracketsRoute = "withRoute: creates a route and destroys it" ~: test
                outgoing = (external, duffQueue) in
              do
                rt <- makeTestRT
-               rt `withRoute` (label -#-> outgoing) $ do
+               rt `withRoute` (label #-> outgoing) $ do
                  lookup <- label `getDirectionWith` rt
                  Just external @=? fmap fst lookup
                lookup <- label `getDirectionWith` rt

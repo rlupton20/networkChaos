@@ -59,7 +59,7 @@ direct (DirectConnection lp' ad' po' vt') = do
         Right (connection, address, virtual) -> do
           out <- newQueue
           let outgoing = (address, out)
-          table `withRoute` (virtual -#-> outgoing) $
+          table `withRoute` (virtual #-> outgoing) $
             makeRelay connection injector out
       return ()
 

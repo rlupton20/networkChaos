@@ -21,8 +21,8 @@ outgoing = snd
 external :: Route -> Addr
 external = fst . snd
 
-(-#->) :: Addr -> (Addr, PacketQueue) -> Route
-local -#-> outgoing = (local, outgoing)
+(#->) :: Addr -> (Addr, PacketQueue) -> Route
+local #-> outgoing = (local, outgoing)
 
   
 data RoutingTable = RT { ip :: (TVar Addr)

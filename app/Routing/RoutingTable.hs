@@ -1,5 +1,5 @@
 module Routing.RoutingTable
-( (-#->)
+( (#->)
 , RoutingTable
 , Injector
 , newRoutingTable
