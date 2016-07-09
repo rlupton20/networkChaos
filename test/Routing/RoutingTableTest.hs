@@ -16,7 +16,7 @@ routingTableTest :: TF.Test
 routingTableTest = TF.testGroup "RoutingTable.hs unit tests:" $ hUnitTestToTests routingTableUnitTests
 
 routingTableUnitTests :: HU.Test
-routingTableUnitTests = HU.TestList $ [addAndRetrieveRoute, lookupNoRoute, delRouteNoRoute, newRouteOverwrites]
+routingTableUnitTests = HU.TestList $ [addAndRetrieveRoute, lookupNoRoute, delRouteNoRoute, newRouteOverwrites, withRouteBracketsRoute]
 
 -- First lets build some utility objects and functions
 -- for testing with.
@@ -94,3 +94,18 @@ newRouteOverwrites = "newRoute: check newRoute overwrites an entry in a RoutingT
       newRoute rt label (newItem, duffQueue)
       lookup <- label `getDirectionWith` rt
       Just newItem @=? fmap fst lookup
+
+
+withRouteBracketsRoute :: HU.Test
+withRouteBracketsRoute = "withRoute: creates a route and destroys it" ~: test
+  where
+    test = let label = addrW8 10 0 0 1
+               external = addrW8 192 168 3 1
+               outgoing = (external, duffQueue) in
+             do
+               rt <- makeTestRT
+               rt `withRoute` (label -#-> outgoing) $ do
+                 lookup <- label `getDirectionWith` rt
+                 Just external @=? fmap fst lookup
+               lookup <- label `getDirectionWith` rt
+               Nothing @=? fmap fst lookup -- avoids problem with TQueue not being and instance of Show

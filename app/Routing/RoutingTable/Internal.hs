@@ -4,11 +4,27 @@ module Routing.RoutingTable.Internal where
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM.TQueue
+import Control.Exception (bracket_)
 
 import qualified Data.Map as M
 
 import Types
 
+type Route = (Addr, (Addr, PacketQueue))
+
+local :: Route -> Addr
+local = fst
+
+outgoing :: Route -> (Addr, PacketQueue)
+outgoing = snd
+
+external :: Route -> Addr
+external = fst . snd
+
+(-#->) :: Addr -> (Addr, PacketQueue) -> Route
+local -#-> outgoing = (local, outgoing)
+
+  
 data RoutingTable = RT { ip :: (TVar Addr)
                        , injector :: Injector
                        , table :: TVar (M.Map Addr (Addr, PacketQueue))}
@@ -58,3 +74,8 @@ getOutChannelFrom ad rt = fmap (fmap snd) $ ad `getDirectionWith` rt
 getInjector :: RoutingTable -> Injector
 getInjector RT{..} = injector
 
+
+withRoute :: RoutingTable -> Route -> IO () -> IO ()
+withRoute rt route action = bracket_ (newRoute rt (local route) (outgoing route))
+                                     (rt `delRouteFor` (local route))
+                                     action

@@ -1,5 +1,6 @@
 module Routing.RoutingTable
-( RoutingTable
+( (-#->)
+, RoutingTable
 , Injector
 , newRoutingTable
 , setAddr
@@ -7,7 +8,8 @@ module Routing.RoutingTable
 , delRouteFor
 , getDirectionWith
 , getOutChannelFrom
-, getInjector ) where
+, getInjector
+, withRoute) where
 
 -- This is an interface file for Routing.RoutingTable.Internal
 import Routing.RoutingTable.Internal
