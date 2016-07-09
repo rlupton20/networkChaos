@@ -10,17 +10,28 @@ import qualified Data.Map as M
 
 import Types
 
+-- |Route is a datatype describing a routing entry.
 type Route = (Addr, (Addr, PacketQueue))
 
+-- | Given a Route, local extracts the address as we would see
+-- it on a local system.
 local :: Route -> Addr
 local = fst
 
+-- |outgoing takes a Route and returns the routing table entry
+-- for tha route, i.e. the external address it is going to, and
+-- the queue to place a packet on.
 outgoing :: Route -> (Addr, PacketQueue)
 outgoing = snd
 
+-- |external determines the external address for a route.
 external :: Route -> Addr
 external = fst . snd
 
+-- |#-> is a combinator for building Routes. It makes it easy to
+-- see how a packet would be routed by a route. For instance
+-- addr #-> (out, queue) describes the routing of packets destined
+-- for addr being routed to out, and immediately being placed on queue.
 (#->) :: Addr -> (Addr, PacketQueue) -> Route
 local #-> outgoing = (local, outgoing)
 
@@ -74,7 +85,11 @@ getOutChannelFrom ad rt = fmap (fmap snd) $ ad `getDirectionWith` rt
 getInjector :: RoutingTable -> Injector
 getInjector RT{..} = injector
 
-
+-- |withRoute is allows an IO action to be executed but with a route
+-- added to the routing table. Once that IO action is completed, the
+-- route is removed from the routing table. In other words withRoute
+-- is a bracketed way of adding a route to a table, which ensures the
+-- route is removed in the case of exceptions etc. 
 withRoute :: RoutingTable -> Route -> IO () -> IO ()
 withRoute rt route action = bracket_ (newRoute rt (local route) (outgoing route))
                                      (rt `delRouteFor` (local route))
