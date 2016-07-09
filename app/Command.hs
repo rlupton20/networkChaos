@@ -58,9 +58,9 @@ direct (DirectConnection lp' ad' po' vt') = do
         Left _ -> putStrLn "Error with input."
         Right (connection, address, virtual) -> do
           out <- newQueue
-          bracket (newRoute table virtual (address, out))
-                  (\_ -> table `delRouteFor` virtual)
-                  (\_ -> makeRelay connection injector out)
+          let outgoing = (address, out)
+          table `withRoute` (virtual -#-> outgoing) $
+            makeRelay connection injector out
       return ()
 
   where

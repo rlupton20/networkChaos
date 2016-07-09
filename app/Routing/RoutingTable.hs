@@ -4,8 +4,6 @@ module Routing.RoutingTable
 , Injector
 , newRoutingTable
 , setAddr
-, newRoute
-, delRouteFor
 , getDirectionWith
 , getOutChannelFrom
 , getInjector
