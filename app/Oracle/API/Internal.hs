@@ -34,7 +34,7 @@ get path oracle = do
   
   manager <- H.newManager $ mkManagerSettings tls Nothing
 
-  request <- H.parseUrl $ (address oracle) ++ path
+  request <- H.parseUrl $ address oracle ++ path
   response <- H.httpLbs request manager
 
   return . show $ H.responseBody response
