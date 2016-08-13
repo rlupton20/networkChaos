@@ -6,7 +6,11 @@ mkDerivation {
   src = ./.;
   isLibrary = false;
   isExecutable = true;
-  buildDepends = [ cabal-install stack happy ghc-mod hindent hlint hasktags stylish-haskell ];
+  buildDepends = [
+  cabal-install stack ghc happy ghc-mod
+  hindent hlint hasktags hoogle
+  stylish-haskell structured-haskell-mode
+  ];
   executableHaskellDepends = [
     async base bytestring cereal connection containers
     data-default-class http-client http-client-tls mtl network
