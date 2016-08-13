@@ -25,3 +25,6 @@ cabal.sandbox.config
 
 # Stack files
 .stack-work
+
+# TAGS
+TAGS

@@ -49,14 +49,14 @@ main = do
 core :: TunTap -> String -> Stack ()
 core tt ip = do
   (injectQueue, injector) <- specInjector tt
-  register $ injector
+  register injector
 
   (router, routeQueue, table) <- specRouter injectQueue ip
-  register $ router
+  register router
   
   -- Now we build the packet reader
   let reader = forever $ do
-        bs <- (readTT tt)
+        bs <- readTT tt
         bs `passTo` routeQueue
   register $ blocksInForeign reader
 
@@ -67,8 +67,8 @@ core tt ip = do
   -- Lastly we start the command line
   let cq = commandQueue env
       post = postCommand cq
-  register $ (runCli commandLine $ CliComm post)
-  
+  register $ runCli commandLine (CliComm post)
+
   where
 
     specInjector :: TunTap -> Stack (PacketQueue, IO ())
@@ -94,4 +94,4 @@ core tt ip = do
     specManager :: RoutingTable -> Stack (IO (), Environment)
     specManager table = liftIO $ do
       env <- makeManaged table
-      return $ (commander `manage` env, env)
+      return (commander `manage` env, env)
