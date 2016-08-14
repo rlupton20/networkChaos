@@ -33,8 +33,17 @@ makeOracle :: C.OracleConfig -> IO Oracle
 makeOracle config = return $ Oracle (C.address config) (C.oracleCert config)
 
 
-get :: String -> Oracle -> IO String
-get path oracle = do
+get :: H.Manager -> String -> IO String
+get manager path = do
+
+  request <- H.parseUrl path
+  response <- H.httpLbs request manager
+
+  return . show $ H.responseBody response
+
+
+makeHTTPManager :: Oracle -> IO H.Manager
+makeHTTPManager oracle = do
   certs <- makeCertificateStore <$> readSignedObject (cert oracle)
   let supported = def { supportedVersions = [TLS12]
                       , supportedCiphers = ciphersuite_strong
@@ -47,13 +56,9 @@ get path oracle = do
                                     , clientHooks = hooks }
       tls = TLSSettings clientParams
 
-  manager <- H.newManager $ mkManagerSettings tls Nothing
-
-  request <- H.parseUrl $ address oracle ++ path
-  response <- H.httpLbs request manager
-
-  return . show $ H.responseBody response
-
+  H.newManager $ mkManagerSettings tls Nothing
+  
+                                       
 clientCertHook :: Oracle 
                -> ([CertificateType], Maybe [HashAndSignatureAlgorithm], [DistinguishedName])
                -> IO (Maybe (CertificateChain, PrivKey))
