@@ -1,22 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Oracle.API.Internal where
 
-import           Control.Applicative       ((<$>))
+import           Control.Applicative       ( (<$>) )
 
 import qualified Data.ByteString           as B
-import           Data.String               (fromString)
+import           Data.String               ( fromString )
 import qualified Network.HTTP.Client       as H
-import           Network.HTTP.Client.TLS   (mkManagerSettings)
-import           Network.Connection        (TLSSettings(..))
+import           Network.HTTP.Client.TLS   ( mkManagerSettings )
+import           Network.Connection        ( TLSSettings(..) )
   
-import           Network.TLS               (ClientParams(..), defaultParamsClient
+import           Network.TLS               ( ClientParams(..), defaultParamsClient
                                            , Supported(..), Version(TLS12)
-                                           , Shared(..)
-                                           , HashAlgorithm(HashSHA512), SignatureAlgorithm(SignatureRSA) )
+                                           , Shared(..) , ClientHooks(..)
+                                           , HashAlgorithm(HashSHA512), SignatureAlgorithm(SignatureRSA)
+                                           , CertificateType, HashAndSignatureAlgorithm, PrivKey )
 import           Network.TLS.Extra.Cipher  (ciphersuite_strong)
-import           Data.X509.File            (readSignedObject, readKeyFile)
-import           Data.X509.CertificateStore (makeCertificateStore)
-import           Data.Default.Class        (def) 
+import           Data.X509                 ( DistinguishedName, CertificateChain )
+import           Data.X509.File            ( readSignedObject, readKeyFile )
+import           Data.X509.CertificateStore( makeCertificateStore )
+import           Data.Default.Class        ( def ) 
 
 import qualified Config as C
 
@@ -38,9 +40,11 @@ get path oracle = do
                       , supportedCiphers = ciphersuite_strong
                       , supportedHashSignatures = [ (HashSHA512, SignatureRSA) ] }
       shared = def { sharedCAStore = certs }
+      hooks = def { onCertificateRequest = clientCertHook oracle }
       templateParams = defaultParamsClient "vanguard-node" ""
       clientParams = templateParams { clientSupported = supported
-                                    , clientShared = shared }
+                                    , clientShared = shared 
+                                    , clientHooks = hooks }
       tls = TLSSettings clientParams
 
   manager <- H.newManager $ mkManagerSettings tls Nothing
@@ -49,3 +53,8 @@ get path oracle = do
   response <- H.httpLbs request manager
 
   return . show $ H.responseBody response
+
+clientCertHook :: Oracle 
+               -> ([CertificateType], Maybe [HashAndSignatureAlgorithm], [DistinguishedName])
+               -> IO (Maybe (CertificateChain, PrivKey))
+clientCertHook _ _ = return Nothing
