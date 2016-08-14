@@ -21,7 +21,7 @@ instance Y.FromJSON NetConfig where
   parseJSON _ = empty
 
 instance Y.FromJSON OracleConfig where
-  parseJSON (Y.Object v) = OracleConfig <$> v .: "address" <*> v .: "node"
+  parseJSON (Y.Object v) = OracleConfig <$> v .: "address" <*> v .: "oracleCert"
   parseJSON _ = empty
 
 loadConfigFromFile :: String -> IO (Either Y.ParseException VanguardConfig)

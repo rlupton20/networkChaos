@@ -3,8 +3,8 @@
 , HUnit, mtl, network, network-house, QuickCheck, stdenv, stm
 , stunclient, test-framework, test-framework-hunit
 , test-framework-quickcheck2, time, tls, transformers
-, unbounded-delays, unix, unix-bytestring, yaml,
-additionalTools ? []
+, unbounded-delays, unix, unix-bytestring, yaml
+, additionalTools ? []
 }:
 mkDerivation {
   pname = "vanguard";

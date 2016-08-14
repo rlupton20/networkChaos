@@ -30,7 +30,7 @@ testCanParseNetConfig = "Can parse YAML for network information" ~: test
 
 testCanParseOracle :: HU.Test
 testCanParseOracle = "Can parse YAML for oracle information" ~: test
-  where test = let yaml = "address: test\nnode: auth.cert"
+  where test = let yaml = "address: test\noracleCert: auth.cert"
                    parsed = Y.decode yaml
                    expected = Just $ OracleConfig "test" "auth.cert" in
                  do expected @=? parsed

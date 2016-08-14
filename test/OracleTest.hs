@@ -22,6 +22,7 @@ testCreateOracleFromConfig = "test an oracle can be created from oracle configur
     test = let config = OracleConfig "address" "auth.cert" in
       do
         oracle <- makeOracle config
-        let (Oracle address) = oracle
+        let (Oracle address cert) = oracle
         "address" @=? address
+        "auth.cert" @=? cert
 
