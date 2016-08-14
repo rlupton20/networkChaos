@@ -63,6 +63,7 @@ executable vanguard
                      , http-client-tls
                      , connection
                      , tls
+                     , x509-store
                      , data-default-class
   hs-source-dirs:      app
   c-sources:	       app/Network/tuntap.c
@@ -102,6 +103,7 @@ test-suite vanguard-test
                       , http-client-tls
                       , connection
                       , tls
+                      , x509-store
                       , data-default-class
   ghc-options:         	-threaded -rtsopts -with-rtsopts=-N
   default-language:    	Haskell2010
