@@ -15,10 +15,11 @@ import Config.Types
 
 
 configTest :: TF.Test
-configTest = testGroup "Config.hs tests" $ hUnitTestToTests $ HU.TestList [ testCanParseNetConfig
-                                                                          , testCanParseOracle
-                                                                          , testCanParseSignedCertificateAuthentication
-                                                                          , testCanParseOracleAuthenticationConfiguration ] 
+configTest = testGroup "Config.hs tests" $ hUnitTestToTests $ 
+             HU.TestList [ testCanParseNetConfig
+                         , testCanParseOracle
+                         , testCanParseSignedCertificateAuthentication
+                         , testCanParseOracleAuthenticationConfiguration ] 
 
 
 testCanParseNetConfig :: HU.Test
@@ -43,8 +44,6 @@ testCanParseSignedCertificateAuthentication = "Can parse YAML for oracle signed 
                    parsed = Y.decode yaml
                    expected = Just $ AuthenticationCertificate "cert" "key" in
                expected @=? parsed
-
-
 
 testCanParseOracleAuthenticationConfiguration :: HU.Test
 testCanParseOracleAuthenticationConfiguration = "Can parse YAML for oracle authentication information" ~: test
