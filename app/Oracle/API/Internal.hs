@@ -15,7 +15,7 @@ import           Network.TLS               ( ClientParams(..), defaultParamsClie
                                            , HashAlgorithm(HashSHA512), SignatureAlgorithm(SignatureRSA)
                                            , CertificateType, HashAndSignatureAlgorithm, PrivKey )
 import           Network.TLS.Extra.Cipher  (ciphersuite_strong)
-import           Data.X509                 ( DistinguishedName, CertificateChain )
+import           Data.X509                 ( DistinguishedName, CertificateChain(..) )
 import           Data.X509.File            ( readSignedObject, readKeyFile )
 import           Data.X509.CertificateStore( makeCertificateStore )
 import           Data.Default.Class        ( def ) 
@@ -62,4 +62,7 @@ makeHTTPManager oracle = do
 clientCertHook :: Oracle 
                -> ([CertificateType], Maybe [HashAndSignatureAlgorithm], [DistinguishedName])
                -> IO (Maybe (CertificateChain, PrivKey))
-clientCertHook _ _ = return Nothing
+clientCertHook _ _ = do 
+  cert <- readSignedObject "test/mycert.cert"
+  key <- readKeyFile "test/mykey.key"
+  return $ Just (CertificateChain cert, head key)

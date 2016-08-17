@@ -28,3 +28,6 @@ cabal.sandbox.config
 
 # TAGS
 TAGS
+
+# Test certificates
+/app/test
