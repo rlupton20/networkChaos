@@ -3,6 +3,8 @@ module Config
 ( NetConfig(..)
 , OracleConfig(..)
 , VanguardConfig(..)
+, AuthenticationCertificate(..)
+, OracleAuth(..)
 , loadConfigFromFile
 ) where
 
@@ -11,6 +13,11 @@ import Data.Yaml ((.:))
 import Control.Applicative ((<$>),(<*>),empty)
 
 import Config.Types
+
+
+loadConfigFromFile :: String -> IO (Either Y.ParseException VanguardConfig)
+loadConfigFromFile file = Y.decodeFileEither file
+
 
 instance Y.FromJSON VanguardConfig where
   parseJSON (Y.Object v) = VanguardConfig <$> v .: "net" <*> v .: "oracle"
@@ -21,8 +28,13 @@ instance Y.FromJSON NetConfig where
   parseJSON _ = empty
 
 instance Y.FromJSON OracleConfig where
-  parseJSON (Y.Object v) = OracleConfig <$> v .: "address" <*> v .: "oracleCert"
+  parseJSON (Y.Object v) = OracleConfig <$> v .: "address" <*> v .: "oracle-certificate"
   parseJSON _ = empty
 
-loadConfigFromFile :: String -> IO (Either Y.ParseException VanguardConfig)
-loadConfigFromFile file = Y.decodeFileEither file
+instance Y.FromJSON AuthenticationCertificate where
+  parseJSON (Y.Object v) = AuthenticationCertificate <$> v .: "signed-certificate" <*> v .: "private-key"
+  parseJSON _ = empty
+  
+instance Y.FromJSON OracleAuth where
+  parseJSON (Y.Object v) = CertID <$> v .: "signed-certificate"
+  parseJSON _ = empty
