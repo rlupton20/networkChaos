@@ -10,8 +10,8 @@ import qualified Test.HUnit as HU
 import           Test.HUnit ((~:),(@=?))
 import           Data.Maybe (isJust)
 
-import Oracle.API
-import Oracle.API.Internal
+import Oracle.HTTPS
+import Oracle.HTTPS.Internal
 import Config.Internal
 
 oracleHTTPSTest :: TF.Test
