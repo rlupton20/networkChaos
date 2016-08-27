@@ -36,7 +36,7 @@ testGetOracleHTTPSSignedCertificateAuthentication = "test we can extract signed 
   
 testClientCertHookFindsCertificates = "test we can load a signed certificate and key from disk" ~: test
   where
-    test = let config = OracleHTTPS undefined undefined (CertID $ AuthenticationCertificate "app/test/mycert.cert" "app/test/mykey.key")
+    test = let config = OracleHTTPS undefined undefined (CertID $ AuthenticationCertificate "test/integration/clientcerts/mycert.cert" "test/integration/clientcerts/mykey.key")
            in
          do
            credentials <- clientCertHook config undefined
