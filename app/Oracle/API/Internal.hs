@@ -23,18 +23,10 @@ import           Data.Default.Class        ( def )
 import qualified Config as C
 
 
--- |An Oracle is an abstract data type which represents a central
--- source of truth for obtaining information about the network.
--- It is used to aid bootstrapping the network for instance.
-data Oracle = Oracle { address :: String
-                     , cert :: String } deriving (Show, Eq)
-
-data OracleAuth = OracleAuth { key :: String
-                             , certificate :: String }
-
-makeOracle :: C.OracleHTTPS -> IO Oracle
-makeOracle config = return $ Oracle (C.address config) (C.oracleCert config)
-
+getHTTPSCertificates :: C.OracleHTTPS -> Maybe (String, String)
+getHTTPSCertificates (C.OracleHTTPS _ _ auth) = case auth of
+                                                  (C.CertID (C.AuthenticationCertificate c k)) -> Just (c,k)
+                                                  _ -> Nothing 
 
 get :: H.Manager -> String -> IO String
 get manager path = do
@@ -45,9 +37,9 @@ get manager path = do
   return . show $ H.responseBody response
 
 
-makeHTTPManager :: Oracle -> IO H.Manager
+makeHTTPManager :: C.OracleHTTPS -> IO H.Manager
 makeHTTPManager oracle = do
-  certs <- makeCertificateStore <$> readSignedObject (cert oracle)
+  certs <- makeCertificateStore <$> readSignedObject (C.oracleCert oracle)
   let supported = def { supportedVersions = [TLS12]
                       , supportedCiphers = ciphersuite_strong
                       , supportedHashSignatures = [ (HashSHA512, SignatureRSA) ] }
@@ -62,7 +54,7 @@ makeHTTPManager oracle = do
   H.newManager $ mkManagerSettings tls Nothing
   
                                        
-clientCertHook :: Oracle 
+clientCertHook :: C.OracleHTTPS 
                -> ([CertificateType], Maybe [HashAndSignatureAlgorithm], [DistinguishedName])
                -> IO (Maybe (CertificateChain, PrivKey))
 clientCertHook _ _ = do 

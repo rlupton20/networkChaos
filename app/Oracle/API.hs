@@ -1,5 +1,5 @@
 module Oracle.API
-( Oracle ) where
+( ) where
 
 
 import Oracle.API.Internal
