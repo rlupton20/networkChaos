@@ -11,15 +11,15 @@ import Data.Yaml as Y
 import Data.ByteString as B
 
 import Config
-import Config.Types
+import Config.Internal
 
 
 configTest :: TF.Test
 configTest = testGroup "Config.hs tests" $ hUnitTestToTests $ 
              HU.TestList [ testCanParseNetConfig
-                         , testCanParseOracle
+                         , testCanParseOracleHTTPS
                          , testCanParseSignedCertificateAuthentication
-                         , testCanParseOracleAuthenticationConfiguration ] 
+                         , testCanParseOracleHTTPSAuthenticationConfiguration ] 
 
 
 testCanParseNetConfig :: HU.Test
@@ -31,11 +31,15 @@ testCanParseNetConfig = "Can parse YAML for network information" ~: test
            expected @=? parsed
 
 
-testCanParseOracle :: HU.Test
-testCanParseOracle = "Can parse YAML for oracle information" ~: test
-  where test = let yaml = "address: test\noracle-certificate: auth.cert"
+testCanParseOracleHTTPS :: HU.Test
+testCanParseOracleHTTPS = "Can parse YAML for oracle information" ~: test
+  where test = let yaml = "address: test\noracle-certificate: auth.cert\n" `B.append`
+                          "authentication:\n  signed-certificate:\n" `B.append`
+                          "    signed-certificate: cert\n" `B.append`
+                          "    private-key: key"
                    parsed = Y.decode yaml
-                   expected = Just $ OracleConfig "test" "auth.cert" in
+                   expectedAuth = (CertID $ AuthenticationCertificate "cert" "key")
+                   expected = Just $ OracleHTTPS "test" "auth.cert" expectedAuth in
                expected @=? parsed
 
 testCanParseSignedCertificateAuthentication :: HU.Test
@@ -45,8 +49,8 @@ testCanParseSignedCertificateAuthentication = "Can parse YAML for oracle signed 
                    expected = Just $ AuthenticationCertificate "cert" "key" in
                expected @=? parsed
 
-testCanParseOracleAuthenticationConfiguration :: HU.Test
-testCanParseOracleAuthenticationConfiguration = "Can parse YAML for oracle authentication information" ~: test
+testCanParseOracleHTTPSAuthenticationConfiguration :: HU.Test
+testCanParseOracleHTTPSAuthenticationConfiguration = "Can parse YAML for oracle authentication information" ~: test
   where test = let yaml = "signed-certificate:\n  signed-certificate: cert\n  private-key: key"
                    parsed = Y.decode yaml
                    expected = Just $ CertID (AuthenticationCertificate "cert" "key") in

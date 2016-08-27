@@ -57,7 +57,11 @@ makeHTTPManager oracle = do
 clientCertHook :: C.OracleHTTPS 
                -> ([CertificateType], Maybe [HashAndSignatureAlgorithm], [DistinguishedName])
                -> IO (Maybe (CertificateChain, PrivKey))
-clientCertHook _ _ = do 
-  cert <- readSignedObject "test/mycert.cert"
-  key <- readKeyFile "test/mykey.key"
-  return $ Just (CertificateChain cert, head key)
+clientCertHook config _ = 
+  maybe (return Nothing) provideCertificates $ getHTTPSCertificates config
+  where
+    provideCertificates :: (String, String) -> IO (Maybe (CertificateChain, PrivKey))
+    provideCertificates (certificate, privateKey) = do
+          cert <- readSignedObject certificate
+          key <- readKeyFile privateKey
+          return $ Just (CertificateChain cert, head key)

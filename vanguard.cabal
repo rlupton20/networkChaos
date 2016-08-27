@@ -22,7 +22,7 @@ executable vanguard
                      , Routing.RoutingTable
                      , Routing.RoutingTable.Internal
                      , Config
-                     , Config.Types
+                     , Config.Internal
                      , Control.Concurrent.Stack
                      , Types
                      , Utils
