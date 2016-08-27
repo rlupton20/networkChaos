@@ -1,11 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 module OracleTest
-( oracleHTTPSTest ) where
+( oracleHTTPSTest 
+, oracleHTTPSUnitTests
+, oracleHTTPSIntegrationTests ) where
 
 import qualified Test.Framework as TF
 import           Test.Framework.Providers.HUnit (hUnitTestToTests)
 import qualified Test.HUnit as HU
 import           Test.HUnit ((~:),(@=?))
+import           Data.Maybe (isJust)
 
 import Oracle.API
 import Oracle.API.Internal
@@ -37,5 +40,4 @@ testClientCertHookFindsCertificates = "test we can load a signed certificate and
            in
          do
            credentials <- clientCertHook config undefined
-           let isAJust = maybe False (const True) credentials
-           True @=? isAJust           
+           True @=? isJust credentials           
