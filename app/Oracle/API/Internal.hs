@@ -29,7 +29,10 @@ import qualified Config as C
 data Oracle = Oracle { address :: String
                      , cert :: String } deriving (Show, Eq)
 
-makeOracle :: C.OracleConfig -> IO Oracle
+data OracleAuth = OracleAuth { key :: String
+                             , certificate :: String }
+
+makeOracle :: C.OracleHTTPS -> IO Oracle
 makeOracle config = return $ Oracle (C.address config) (C.oracleCert config)
 
 

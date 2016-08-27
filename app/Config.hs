@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Config
 ( NetConfig(..)
-, OracleConfig(..)
+, OracleHTTPS(..)
 , VanguardConfig(..)
 , AuthenticationCertificate(..)
-, OracleAuth(..)
+, OracleHTTPSAuth(..)
 , loadConfigFromFile
 ) where
 
@@ -27,14 +27,14 @@ instance Y.FromJSON NetConfig where
   parseJSON (Y.Object v) = NetConfig <$> v .: "device" <*> v .: "address"
   parseJSON _ = empty
 
-instance Y.FromJSON OracleConfig where
-  parseJSON (Y.Object v) = OracleConfig <$> v .: "address" <*> v .: "oracle-certificate"
+instance Y.FromJSON OracleHTTPS where
+  parseJSON (Y.Object v) = OracleHTTPS <$> v .: "address" <*> v .: "oracle-certificate" <*> v .: "authentication"
   parseJSON _ = empty
 
 instance Y.FromJSON AuthenticationCertificate where
   parseJSON (Y.Object v) = AuthenticationCertificate <$> v .: "signed-certificate" <*> v .: "private-key"
   parseJSON _ = empty
   
-instance Y.FromJSON OracleAuth where
+instance Y.FromJSON OracleHTTPSAuth where
   parseJSON (Y.Object v) = CertID <$> v .: "signed-certificate"
   parseJSON _ = empty
