@@ -1,4 +1,5 @@
-{ mkDerivation, async, base, bytestring, cereal, connection
+{ mkDerivation, mbedtls
+, async, base, bytestring, cereal, connection
 , containers, data-default-class, http-client, http-client-tls
 , HUnit, mtl, network, network-house, QuickCheck, stdenv, stm
 , stunclient, test-framework, test-framework-hunit
@@ -14,12 +15,18 @@ mkDerivation {
   isExecutable = true;
   buildDepends = additionalTools;
   executableHaskellDepends = [
+    # System dependencies
+    mbedtls
+    # Haskell dependencies
     async base bytestring cereal connection containers
     data-default-class http-client http-client-tls mtl network
     network-house stm stunclient tls transformers unbounded-delays unix
     unix-bytestring yaml
   ];
   testHaskellDepends = [
+    # System dependencies
+    mbedtls
+    # Haskell dependencies
     async base bytestring connection containers data-default-class
     http-client http-client-tls HUnit mtl QuickCheck stm test-framework
     test-framework-hunit test-framework-quickcheck2 time tls
