@@ -32,9 +32,8 @@ executable vanguard
                      , Manager.Types
                      , Command
                      , Command.Types
-                     , Command.CliTypes
-                     , Command.Interaction
-                     , Command.CommandLine
+                     , Command.ControlTypes
+                     , Command.Control
                      , Network.TunTap
   other-extensions:    BangPatterns
                      , OverloadedStrings

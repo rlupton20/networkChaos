@@ -17,9 +17,9 @@ import Relay.Relay
 import Manager
 
 import Command
-import Command.Types
-import Command.CliTypes
-import Command.CommandLine
+import Command.Types (postCommand)
+import Command.ControlTypes (runControl, ControlEnvironment(..))
+import Command.Control (controller)
 
 import Types
 import Utils
@@ -67,7 +67,7 @@ core tt ip = do
   -- Lastly we start the command line
   let cq = commandQueue env
       post = postCommand cq
-  register $ runCli commandLine (CliComm post)
+  register $ runControl controller (ControlEnvironment post)
 
   where
 
