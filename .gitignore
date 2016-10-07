@@ -26,8 +26,12 @@ cabal.sandbox.config
 # Stack files
 .stack-work
 
-# TAGS
+# TAGS and other emacs things
 TAGS
+.tramp_history
 
 # Test certificates
 /app/test
+
+# nix output
+result

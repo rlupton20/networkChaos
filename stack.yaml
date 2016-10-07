@@ -3,9 +3,8 @@ extra-package-dbs: []
 packages:
 - '.'
 extra-deps:
-- stringprep-1.0.0
+- stringprep-1.0.0 # Required by stunclient
 - stunclient-0.1.0.1
-- text-1.2.2.0
 resolver: lts-6.5
 
 docker:
