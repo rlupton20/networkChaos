@@ -1,9 +1,6 @@
 module Config
 ( NetConfig(..)
-, OracleHTTPS(..)
 , VanguardConfig(..)
-, AuthenticationCertificate(..)
-, OracleHTTPSAuth(..)
 , loadConfigFromFile
 ) where
 

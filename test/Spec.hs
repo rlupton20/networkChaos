@@ -5,7 +5,6 @@ import TypesTest (typesTest)
 import Routing.RoutingTableTest (routingTableTest)
 import ManagerTest (managerTest)
 import ConfigTest (configTest)
-import OracleTest (oracleHTTPSTest)
 
 main :: IO ()
 main = defaultMain tests
@@ -14,5 +13,4 @@ tests :: [Test]
 tests = [ typesTest
         , routingTableTest
         , managerTest
-        , configTest
-        , oracleHTTPSTest ]
+        , configTest ]
