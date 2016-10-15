@@ -2,10 +2,19 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
+
+# stunclient currently has an incompatibility with network
+# so pull the pull-request that fixes this
+- location:
+    git: https://github.com/obadz/hs-stun/
+    commit: 7055594ef0b54477c43e26bb1b94c933bb4aead8
+  extra-dep: true
+# remove when fix appears
+
 extra-deps:
 - stringprep-1.0.0 # Required by stunclient
-- stunclient-0.1.0.1
-resolver: lts-6.5
+# - stunclient-0.1.0.1 # Commented out until fixed
+resolver: lts-7.3
 
 docker:
   enable: true
