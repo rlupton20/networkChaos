@@ -42,7 +42,7 @@ int getTunTap(char *name, int flags){
      file descriptor (once returned) indicates
      an error. */  
   if ( (fd = open(device, O_RDWR)) < 0 ) {
-    perror("open /dev/net/tun"); /* DEBUG */
+      perror("open /dev/net/tun"); 
       return fd;
   }
 
@@ -60,8 +60,7 @@ int getTunTap(char *name, int flags){
 
   /* Now lets try and ioctl */
   if ( ( err = ioctl(fd, TUNSETIFF, (void *) &req) ) < 0) {
-    perror("ioctl");
-    printf("ioctl error: %d\n", err); /* DEBUG */
+    perror("ioctl on tun device");
     close(fd);
     return err;
   }
