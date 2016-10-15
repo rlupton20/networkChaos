@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h> /* DEBUG */
 
 #include <sys/ioctl.h>
 
@@ -41,6 +42,7 @@ int getTunTap(char *name, int flags){
      file descriptor (once returned) indicates
      an error. */  
   if ( (fd = open(device, O_RDWR)) < 0 ) {
+    perror("open /dev/net/tun"); /* DEBUG */
       return fd;
   }
 
@@ -58,6 +60,8 @@ int getTunTap(char *name, int flags){
 
   /* Now lets try and ioctl */
   if ( ( err = ioctl(fd, TUNSETIFF, (void *) &req) ) < 0) {
+    perror("ioctl");
+    printf("ioctl error: %d\n", err); /* DEBUG */
     close(fd);
     return err;
   }

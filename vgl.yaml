@@ -5,6 +5,5 @@ net:
   device: vgl0
   address: 10.0.0.2
 
-dht:
-  db: etcd
-  address: 127.0.0.1:2379
+control:
+  socket: /home/richard/vanguard.sock

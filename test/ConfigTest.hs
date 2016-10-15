@@ -16,7 +16,8 @@ import Config.Internal
 
 configTest :: TF.Test
 configTest = testGroup "Config.hs tests" $ hUnitTestToTests $ 
-             HU.TestList [ testCanParseNetConfig ]
+             HU.TestList [ testCanParseNetConfig
+                         , testCanParseControlConfig ]
 
 
 testCanParseNetConfig :: HU.Test
@@ -28,3 +29,10 @@ testCanParseNetConfig = "Can parse YAML for network information" ~: test
            expected @=? parsed
 
 
+testCanParseControlConfig :: HU.Test
+testCanParseControlConfig = "Can parse YAML for control socket information" ~: test
+  where
+    test = let yaml = "socket: /path/to/socket"
+               parsed = Y.decode yaml
+               expected = Just $ ControlConfig "/path/to/socket" in
+            expected @=? parsed

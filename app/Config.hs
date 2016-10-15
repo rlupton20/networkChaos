@@ -1,6 +1,7 @@
 module Config
-( NetConfig(..)
-, VanguardConfig(..)
+( VanguardConfig(..)
+, NetConfig(..)
+, ControlConfig (..)
 , loadConfigFromFile
 ) where
 
