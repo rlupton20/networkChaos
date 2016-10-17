@@ -4,7 +4,7 @@
 , HUnit, mtl, network, network-house, QuickCheck, stdenv, stm
 , stunclient, test-framework, test-framework-hunit
 , test-framework-quickcheck2, time, tls, transformers
-, unbounded-delays, unix, unix-bytestring, yaml
+, unbounded-delays, unix, unix-bytestring, yaml, HTTP
 , additionalTools ? []
 }:
 mkDerivation {
@@ -21,7 +21,7 @@ mkDerivation {
     async base bytestring cereal connection containers
     data-default-class http-client http-client-tls mtl network
     network-house stm stunclient tls transformers unbounded-delays unix
-    unix-bytestring yaml
+    unix-bytestring yaml HTTP
   ];
   testHaskellDepends = [
     # System dependencies

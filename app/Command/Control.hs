@@ -1,29 +1,41 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Command.Control
 ( controller ) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Exception (bracket, bracket_)
 import Network.Socket ( Family(AF_UNIX), SocketType(Stream), SockAddr(SockAddrUnix)
-                      , Socket, defaultProtocol, socket, bind, close )
+                      , Socket, defaultProtocol, socket, bind, close
+                      , listen, accept )
+import Network.Socket.ByteString ( send, recv )
 import System.Posix.Files ( removeLink )
+
+import Data.ByteString ( ByteString )
+import Network.TCP ( socketConnection )
+import Network.HTTP ( HandleStream, receiveHTTP, Request(rqBody) )
 
 import Command.ControlTypes (Control, ControlEnvironment)
   
 
 controller :: String -> ControlEnvironment -> IO ()
 controller socketPath _ = do
-  liftIO $ withControlSocket socketPath $ \_ -> 
-    let loop = do 
-            cmd <- getLine
-            if cmd == "quit" then return () else process cmd >> loop
-    in loop
+  liftIO $ withControlSocket socketPath $ \sock ->
+    do 
+        listen sock 5
+        serverLoop sock
+        
+
+serverLoop :: Socket -> IO ()
+serverLoop sock = do
+  (conn, _) <- accept sock
+
+  hs <- (socketConnection "Client" 0 conn :: IO (HandleStream ByteString))
+  req <- receiveHTTP hs
+  case req of
+    Right request -> if (rqBody request) == "quit" then return () else serverLoop sock
+    Left _ -> putStrLn "Error"
 
 
-process :: String -> IO ()
-process cmd
-  | otherwise = putStrLn $ "Invalid command: " ++ cmd
-
-  
 -- |withUnixSocket opens a new (streaming) unix socket, with the promise
 -- that it will be closed in the event of an exception, or when the passed
 -- action is finished.
