@@ -13,9 +13,9 @@ import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (try, getMaskingState, MaskingState(..))
 
-import Manager.Manager
-import Manager.Manage
-import Manager.Types
+import Control.Concurrent.TreeThreads.Manager
+import Control.Concurrent.TreeThreads.Manage
+import Control.Concurrent.TreeThreads.Types
 
 import Routing.RoutingTable
 

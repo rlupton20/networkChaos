@@ -1,5 +1,5 @@
 {-# LANGUAGE ExistentialQuantification, RankNTypes, RecordWildCards, DeriveDataTypeable #-}
-module Manager.Manage where
+module Control.Concurrent.TreeThreads.Manage where
 
 import Control.Concurrent (ThreadId, myThreadId)
 import Control.Concurrent.Async ( Async, async, cancel
@@ -16,7 +16,7 @@ import Control.Monad.Trans.Reader (ReaderT, runReaderT)
 
 import Data.Typeable (Typeable)
 
-import Manager.Types
+import Control.Concurrent.TreeThreads.Types
 
 
 data CullCrash = CullCrash deriving (Eq, Show, Typeable)

@@ -1,4 +1,4 @@
-module Manager
+module Control.Concurrent.TreeThreads
 ( Environment(..)
 , makeManaged
 , Manager

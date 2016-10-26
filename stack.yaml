@@ -11,6 +11,12 @@ packages:
   extra-dep: true
 # remove when fix appears
 
+# Use our tree-threads library
+- location:
+    git: https://github.com/rlupton20/tree-threads/
+    commit: 9682fd706b154c51cbdfaa541fcc5db5d9e2a196        
+  extra-dep: true   
+
 extra-deps:
 - stringprep-1.0.0 # Required by stunclient
 # - stunclient-0.1.0.1 # Commented out until fixed

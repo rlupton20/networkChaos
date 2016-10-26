@@ -1,4 +1,4 @@
-module Manager.Manager where
+module Control.Concurrent.TreeThreads.Manager where
 
 import Control.Concurrent.STM (atomically, modifyTVar')
 import Control.Concurrent.Async (async)
@@ -8,8 +8,8 @@ import Control.Monad.Trans.Reader (ask, asks)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (mask)
 
-import Manager.Types
-import Manager.Manage (manage)
+import Control.Concurrent.TreeThreads.Types
+import Control.Concurrent.TreeThreads.Manage (manage)
 
 import Routing.RoutingTable
 import Command.Types

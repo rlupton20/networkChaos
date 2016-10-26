@@ -1,4 +1,4 @@
-module Manager.Types where
+module Control.Concurrent.TreeThreads.Types where
 
 import Control.Concurrent.Async ( Async )
 import Control.Concurrent.STM.TVar ( TVar )
