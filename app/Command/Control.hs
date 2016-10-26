@@ -2,8 +2,9 @@
 module Command.Control
 ( controller ) where
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Exception (bracket, bracket_)
+import Control.Monad ( unless )
+import Control.Monad.IO.Class ( MonadIO, liftIO )
+import Control.Exception ( bracket, bracket_ )
 import Network.Socket ( Family(AF_UNIX), SocketType(Stream), SockAddr(SockAddrUnix)
                       , Socket, defaultProtocol, socket, bind, close
                       , listen, accept )
@@ -14,11 +15,13 @@ import Data.ByteString ( ByteString )
 import Network.TCP ( socketConnection )
 import Network.HTTP ( HandleStream, receiveHTTP, Request(rqBody) )
 
-import Command.ControlTypes (Control, ControlEnvironment)
-  
+import Command.ControlTypes ( Control, ControlEnvironment )
+
+import Data.String ( IsString ) -- Will be removed when API is properly written
+
 
 controller :: String -> ControlEnvironment -> IO ()
-controller socketPath _ = do
+controller socketPath _ = 
   liftIO $ withControlSocket socketPath $ \sock ->
     do 
         listen sock 5
@@ -29,21 +32,24 @@ serverLoop :: Socket -> IO ()
 serverLoop sock = do
   (conn, _) <- accept sock
 
-  hs <- (socketConnection "Client" 0 conn :: IO (HandleStream ByteString))
+  hs <- socketConnection "Client" 0 conn :: IO (HandleStream ByteString)
   req <- receiveHTTP hs
   case req of
-    Right request -> if (rqBody request) == "quit" then return () else serverLoop sock
+    Right request -> unless (isQuit request) $ serverLoop sock
     Left _ -> putStrLn "Error"
+
+
+isQuit :: (Eq a, IsString a) => Request a -> Bool
+isQuit request = rqBody request == "quit"
 
 
 -- |withUnixSocket opens a new (streaming) unix socket, with the promise
 -- that it will be closed in the event of an exception, or when the passed
 -- action is finished.
 withUnixSocket :: (Socket -> IO a) -> IO a
-withUnixSocket action = bracket
+withUnixSocket = bracket
   (socket AF_UNIX Stream defaultProtocol)
-  (\sock -> close sock) 
-  action
+  close
 
 
 -- |withControlSocket opens a (streaming) unix socket which is bound to
@@ -51,7 +57,6 @@ withUnixSocket action = bracket
 -- in the event of an exception, or after the action has completed running.
 withControlSocket :: String -> (Socket -> IO a) -> IO a
 withControlSocket path action = withUnixSocket $ \sock ->
-  do
     bracket_ (bind sock $ SockAddrUnix path)
              (removeLink path)
              (action sock)
