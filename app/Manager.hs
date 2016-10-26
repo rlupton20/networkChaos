@@ -3,10 +3,29 @@ module Manager
 , makeManaged
 , Manager
 , manage
+, makeManaged
 , spawn
 , environment
 , fromEnvironment ) where
 
-import Control.Concurrent.TreeThreads.Manager
-import Control.Concurrent.TreeThreads.Manage
-import Control.Concurrent.TreeThreads.Types
+
+import Command.Types ( CommandQueue, newCommandQueue )
+import Routing.RoutingTable ( RoutingTable )
+  
+import Control.Concurrent.TreeThreads
+
+
+data Environment = Environment { routingTable :: RoutingTable
+                               , commandQueue :: CommandQueue }
+
+
+type Manager = Managed Environment
+
+  
+-- |makeManaged takes a RoutingTable, and creates a fresh
+-- environment with which it can be managed.
+makeManaged :: RoutingTable -> IO Environment
+makeManaged table = do
+  commands <- newCommandQueue
+  return $ Environment table commands
+

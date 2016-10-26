@@ -12,9 +12,9 @@ packages:
 # remove when fix appears
 
 # Use our tree-threads library
-- location:
+- location: 
     git: https://github.com/rlupton20/tree-threads/
-    commit: 9682fd706b154c51cbdfaa541fcc5db5d9e2a196        
+    commit: a066650d60349202544cb97b05a9e04127df1e61
   extra-dep: true   
 
 extra-deps:
