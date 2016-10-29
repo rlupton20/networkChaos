@@ -1,12 +1,11 @@
 module Manager
 ( Environment(..)
-, makeManaged
 , Manager
 , manage
 , makeManaged
 , spawn
 , environment
-, fromEnvironment ) where
+, withEnvironment ) where
 
 
 import Command.Types ( CommandQueue, newCommandQueue )
@@ -19,7 +18,7 @@ data Environment = Environment { routingTable :: RoutingTable
                                , commandQueue :: CommandQueue }
 
 
-type Manager = Managed Environment
+type Manager = TreeThread Environment
 
   
 -- |makeManaged takes a RoutingTable, and creates a fresh
@@ -29,3 +28,10 @@ makeManaged table = do
   commands <- newCommandQueue
   return $ Environment table commands
 
+ 
+manage :: Manager () -> Environment -> IO ()
+manage = sproutOn
+
+
+--spawn :: Manager () -> Manager Branch
+spawn = sprout

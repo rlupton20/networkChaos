@@ -14,13 +14,13 @@ packages:
 # Use our tree-threads library
 - location: 
     git: https://github.com/rlupton20/tree-threads/
-    commit: a066650d60349202544cb97b05a9e04127df1e61
+    commit: b84e5f8cacf5f10b2a5a4af3965d7d30382d3478
   extra-dep: true   
 
 extra-deps:
 - stringprep-1.0.0 # Required by stunclient
 # - stunclient-0.1.0.1 # Commented out until fixed
-resolver: lts-7.3
+resolver: lts-7.5
 
 docker:
   enable: true

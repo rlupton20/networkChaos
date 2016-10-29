@@ -25,7 +25,7 @@ import Command.Types
 -- to spawn. The only commands it deals with explictly is quitting.
 commander :: Manager ()
 commander = do
-  cq <- fromEnvironment (commandQueue)
+  cq <- withEnvironment commandQueue
   cmd <- liftIO $ getCommand cq
   if cmd == Quit then return () else process cmd >> commander
 
@@ -43,12 +43,12 @@ process _ = liftIO $ error "Invalid command reached processor."
 -- mostly used for testing and will probably be removed eventually.
 direct :: Command -> Manager ()
 direct (DirectConnection lp' ad' po' vt') = do
-  table <- fromEnvironment (routingTable)
+  table <- withEnvironment routingTable
   let injector = getInjector table
-  liftIO $ do
+  liftIO $
     bracket (newUDPSocket) (S.close . getSocket) $ \udpsocket -> do
       localport <- S.socketPort . getSocket $ udpsocket
-      atomically.(putTMVar lp') $ fromIntegral localport
+      atomically . putTMVar lp' $ fromIntegral localport
       [address',port',virtual'] <- sequence $
         map (atomically.takeTMVar) [ad',po',vt']
       
