@@ -11,7 +11,8 @@ import Data.ByteString ( ByteString )
 import Network.TCP ( socketConnection )
 import Network.HTTP ( HandleStream, receiveHTTP, Request(rqBody) )
 
-import Command.ControlTypes ( Control, ControlEnvironment(..), withEnvironment )
+import Command.ControlTypes ( Control, ControlEnvironment(..)
+                            , forkWith, environment, withEnvironment, local )
 
 import Data.String ( IsString ) -- Will be removed when API is properly written
 
@@ -19,21 +20,33 @@ import Data.String ( IsString ) -- Will be removed when API is properly written
 controller :: Control ()
 controller = do
     sock <- withEnvironment controlSocket
-    liftIO $ do
-        listen sock 5
-        serverLoop sock
-        
+    liftIO $ listen sock 5
+    server
+    
 
-serverLoop :: Socket -> IO ()
-serverLoop sock = do
-  (conn, _) <- accept sock
+server :: Control ()
+server = do
+  sock <- withEnvironment controlSocket
+  loop sock
+  where
+    loop :: Socket -> Control ()
+    loop sock = do
+      (conn, _) <- liftIO $ accept sock
+      workFromSocket conn $ forkWith process
+      loop sock
 
-  hs <- socketConnection "Client" 0 conn :: IO (HandleStream ByteString)
-  req <- receiveHTTP hs
-  case req of
-    Right request -> unless (isQuit request) $ serverLoop sock
-    Left _ -> putStrLn "Error"
+    workFromSocket :: Socket -> Control a -> Control a
+    workFromSocket sock ctl = do
+      env <- environment
+      local (const $ env { controlSocket = sock }) ctl
+  
 
-
-isQuit :: (Eq a, IsString a) => Request a -> Bool
-isQuit request = rqBody request == "quit"
+process :: Control ()
+process = do
+  sock <- withEnvironment controlSocket
+  liftIO $ do
+    hs <- socketConnection "Client" 0 sock :: IO (HandleStream ByteString)
+    req <- receiveHTTP hs
+    case req of
+      Right request -> putStrLn $ "Got request " ++ show request
+      Left _ -> putStrLn "Error"

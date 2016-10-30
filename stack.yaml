@@ -14,7 +14,7 @@ packages:
 # Use our tree-threads library
 - location: 
     git: https://github.com/rlupton20/tree-threads/
-    commit: b84e5f8cacf5f10b2a5a4af3965d7d30382d3478
+    commit: 0380b68a661b73072293b6e19de298a0436d4ae6
   extra-dep: true   
 
 extra-deps:
