@@ -13,7 +13,9 @@ let
                        then pkgs.haskellPackages
                        else pkgs.haskell.packages.${compiler};
 
-  drv = haskellPackages.callPackage ./vanguard.nix { additionalTools = tools; };
+  treeThreads = haskellPackages.callPackage ./tree-threads.nix {};
+  drv = haskellPackages.callPackage ./vanguard.nix { additionalTools = tools; 
+                                                     tree-threads = treeThreads; };
 
 in
 

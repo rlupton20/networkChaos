@@ -1,5 +1,6 @@
-* Dummy network Interfaces
-** To create a dummy interface:
+* Old notes
+** Dummy network Interfaces
+*** To create a dummy interface:
 
 sudo modprobe dummy
 sudo ip link add rvl0 type dummy
@@ -7,25 +8,25 @@ sudo ifconfig rvl0 up
 
 route add -net 10.0.0.0 netmask 255.255.255.0 dev rvl0
 
-** To take the dummy interface down:
+*** To take the dummy interface down:
 
 route delete -net 10.0.0.0 netmask 255.255.255.0 dev rvl0
 
 sudo ifconfig rvl0 down
 sudo ip link delete rvl0 type dummy
 sudo rmmod dummy
-* Ideas and finds collected
-** Sockets
-*** Raw Sockets
+** Ideas and finds collected
+*** Sockets
+**** Raw Sockets
 IPPROTO_RAW is protocol number 255.
-** Notes and resources
+*** Notes and resources
 http://www.pocketnix.org/posts/Linux%20Networking:%20Dummy%20Interfaces%20and%20Virtual%20Bridges
 http://unix.stackexchange.com/questions/152331/how-can-i-create-a-virtual-ethernet-interface-on-a-machine-without-a-physical-ad
-*** Parsing packets with the Haskell house library
+**** Parsing packets with the Haskell house library
 http://osdir.com/ml/lang.haskell.libraries/2006-05/msg00076.html
-*** List of useable IP addresses for LAN
+**** List of useable IP addresses for LAN
 http://www.arrowmail.co.uk/articles/iprange.aspx
-** Generating SSL (TSL) keys and certificates
+*** Generating SSL (TSL) keys and certificates
 From the command line, the following is a good starting point
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 30
 
@@ -33,10 +34,10 @@ Clients also expect the hostname and common name to agree (when setting ClientPa
 
 Clients also need to know whether they can trust a certificate or not.
 Add trusted certificates to Shared's sharedCAStoreCertificates can be loaded using readSignedObject (Data.X509.File), and translated to CertificateStore by makeCertificateStore (Data.X509.CertificateStore).
-** Communicating certificates
+*** Communicating certificates
 Could use a SHA hash to pass condensed certificate check to others.
 ClientHooks can be used on receipt of a certificate, to check it against a hash, and add it to a database.
-** TLS sockets in Haskell's TLS library
+*** TLS sockets in Haskell's TLS library
 To get TLS working: use contextNew backend params    --randomNumGen?
 NOTE: A context should be made on a connection with a client, not
 just a listening socket.
@@ -46,7 +47,7 @@ https://hackage.haskell.org/package/tls-1.2.2/docs/Network-TLS.html#g:6
 Socket is an instance of HasBackend, so contextNew can be passed a socket.
 ClientParams is an instance of TLSParams, as is ServerParams (missing from documentation, but ghci confirms).
 NOTE: contextNew doesn't appear to need a random number generator. Where on earth did I find CPRG?
-*** ServerParams
+**** ServerParams
 ServerParams = ServerParams {
 serverWantClientCert :: Bool,
 serverCACertificates :: [SignedCertificate],
@@ -56,8 +57,8 @@ serverHooks :: ServerHooks,
 serverSupported :: Supported }
 
 Can get defaults by using def from Data.Default.Class
-*** ClientParams
-*** Reading certificates
+**** ClientParams
+**** Reading certificates
 The old Network.TLS.Extra provides:
 fileReadCertificate :: FilePath -> IO X509
 fileReadPrivateKey :: FilePath -> IO PrivateKey
@@ -75,60 +76,60 @@ Since on the fly (non-interactive) generation is also desirable, one can do this
 E.g.
 http://crohr.me/journal/2014/generate-self-signed-ssl-certificate-without-prompt-noninteractive-mode.html
 http://unix.stackexchange.com/questions/104171/create-ssl-certificate-non-interactively
-*** Random number generator for Cryptography
+**** Random number generator for Cryptography
 SystemRNG is probably enough (looking for an instance of CPRG)
 Actually, not required for contextNew
-*** Sending data
+**** Sending data
 Using {-# LANGUAGE OverloadedStrings #-} with import Data.String to use ByteStrings with fromString (i.e. abstract string datatype ala Num)
-** Datagram TLS
+*** Datagram TLS
 DTLS is for unreliable transport protocols. May be useful for tunneling UDP etc.
-** Sockets
+*** Sockets
 aNY_PORT can be passed as a port number if a dynamically allocated port is required. Since I need many connections this is useful. There are functions available to discover this number also.
 Since I want asynchronous communication, each correspondence will have
 two sockets. It makes sense for these to be bound to a port to
 simplify port mapping etc.
 Also iNADDR_ANY for receiving from any interface (handy, since typically IP isn't static).
-** UDP sockets
+*** UDP sockets
 Need to manage these for tunnelling!
-** UPnP (getting a peer-to-peer workable connection)
+*** UPnP (getting a peer-to-peer workable connection)
 http://www.upnp-hacks.org/igd.html
-** STUN protocol
+*** STUN protocol
 Probably the way needed to get a peer-to-peer system up and running.
 Haskell has the package stunclient, which provides the module Network.Stun
 This required libicu-dev to be installed in order that dependency text-icu can be installed.
-** Keeping peer-to-peer connections alive
+*** Keeping peer-to-peer connections alive
 Have separate(s) thread sending and receiving messages to each peer to keep connections alive.
-** PPP Protocol
+*** PPP Protocol
 Point-to-point protocol, can be used to deliver packets. Good idea here?
-** TURN protocol
+*** TURN protocol
 If STUN fails then TURN.
 Free (with sign up) TURN server
 http://numb.viagenie.ca/
-** cabal
+*** cabal
 https://downloads.haskell.org/~ghc/7.0.4/docs/html/Cabal/authors.html
-** FFI and C
+*** FFI and C
 http://blog.bjrn.se/2008/09/speeding-up-haskell-with-c-very-short.html
-** Tinc
+*** Tinc
 Small VPN for creating mesh networks. No server client structure.
-* MTU
+** MTU
 Don't want incoming packets (to be routed) to be too large to tunnel.
 If the TUN devices MTU (Maximum Transmission Unit) is set low enough, then enough room should be preserved to add a header and send it.
-* January 2016 todo list
-** DONE Make ProcUnit exception safe (replaced with Stack and Buildable)
+** January 2016 todo list
+*** DONE Make ProcUnit exception safe (replaced with Stack and Buildable)
 Wrapping Async might be the best way
-** DONE Make Manager spawn exception safe threads
+*** DONE Make Manager spawn exception safe threads
 Custom async spawning system, with a culling thread removing dead submanagers from a list.
-** TODO Tidy and check overall exception safety
+*** TODO Tidy and check overall exception safety
 Probably will follow from the above.
 
-** TODO Make typing of Stack and manage make some sense
-* Cabal file specifics
-  c-sources:	       src/Network/tuntap.c
-  ghc-options:	       -O2 -threaded
-* Nginx reverse proxy for client certificate authentication
-  http://nategood.com/client-side-certificate-authentication-in-ngi
-* DONE May 2016 Tidy
-** File structure
+*** TODO Make typing of Stack and manage make some sense
+** Cabal file specifics
+   c-sources:	       src/Network/tuntap.c
+   ghc-options:	       -O2 -threaded
+** Nginx reverse proxy for client certificate authentication
+   http://nategood.com/client-side-certificate-authentication-in-ngi
+** DONE May 2016 Tidy
+*** File structure
 app/
 ├── Command
 │   ├── CliTypes.hs
@@ -173,13 +174,13 @@ app/
 │   └── RoutingTable.hs
 ├── Types.hs
 └── Utils.hs
-** Tasks
-*** Import namespaces
+*** Tasks
+**** Import namespaces
 
 All library functions should be imported with namespaces. This allows
 us to use more obvious variable names in the source.
 
-*** Variable and datatype naming
+**** Variable and datatype naming
 Typically not very uniform, and quite hard to read. Short names are
 good, but often one finds oneself doing some processing of some input,
 and its not clear what to call this input. Maybe some factoring is
@@ -187,144 +188,170 @@ required to avoid these steps, or maybe good names or datatype
 wrappers can be used to clear this up. Namespaced imports may help
 here.
 
-*** Document what each file contains
-*** Individual sections
-**** DONE Command
-     Command contains Manager instances which setup sockets for
-     communication with peers, and add entries to the routing table.
+**** Document what each file contains
+**** Individual sections
+***** DONE Command
+      Command contains Manager instances which setup sockets for
+      communication with peers, and add entries to the routing table.
 
-     There are also functions which create a basic command line, and
-     specify a communication protocol with the Manager instances to do this.
+      There are also functions which create a basic command line, and
+      specify a communication protocol with the Manager instances to do this.
 
-**** DONE Config
 ***** DONE Config
-      Contains parser function and parsing instances for various
-      configuration data types.
-***** DONE Config.Types
-      Contains algebraic datatypes for various configuration objects.
-**** DONE Control
-***** DONE Concurrent.Stack
-      Control structures for threads which depend uppon one another.
-**** DONE Debug
-     Generally useful debuggin functions for looking in to packets etc.
-**** DONE Main
-     Launches the program, specified as a Stack (). Loads and parses the
-     configuration file.
-**** DONE Manager
-***** DONE Manager.hs
-      Manager.hs contains interface functions for spawning new
-      Manager threads, and querying the environment.
-***** DONE Manage.hs
-       Defines a function to run a manager, and implements the
-       internal submanager thread tracking and exception handling
-       mechanisms.
-**** Network
-     Tools for opening TUN devices. Could use some
-     embellishment. Deferring for now, but will set as an ongoing task.
-**** DONE Relay
-***** DONE Connection.hs 
-      Contains the typeclass for abstracting away connections, and a
-      utility function for resolving addresses.
-***** Debug.hs
-      Contains a connection typeclass instance which is just standard
-      input and output. Not really used. Will probably be removed at
-      some point in the future.
-***** DONE Interface.hs 
-      Create UDP sockets, and turn them into abstract connections.
-***** DONE Relay.hs
-      Contains a function which spawns a send and receive thread which
-      reads from a queue of packets and writes to a queue of packets,
-      given a connection function.
-***** Stun.hs
-      Currently not in use, but contains experimental stubs for
-      creating STUNned connections.
-**** DONE Routing
+****** DONE Config
+       Contains parser function and parsing instances for various
+       configuration data types.
+****** DONE Config.Types
+       Contains algebraic datatypes for various configuration objects.
+***** DONE Control
+****** DONE Concurrent.Stack
+       Control structures for threads which depend uppon one another.
+***** DONE Debug
+      Generally useful debuggin functions for looking in to packets etc.
+***** DONE Main
+      Launches the program, specified as a Stack (). Loads and parses the
+      configuration file.
+***** DONE Manager
+****** DONE Manager.hs
+       Manager.hs contains interface functions for spawning new
+       Manager threads, and querying the environment.
+****** DONE Manage.hs
+       	Defines a function to run a manager, and implements the
+       	internal submanager thread tracking and exception handling
+       	mechanisms.
+***** Network
+      Tools for opening TUN devices. Could use some
+      embellishment. Deferring for now, but will set as an ongoing task.
+***** DONE Relay
+****** DONE Connection.hs 
+       Contains the typeclass for abstracting away connections, and a
+       utility function for resolving addresses.
+****** Debug.hs
+       Contains a connection typeclass instance which is just standard
+       input and output. Not really used. Will probably be removed at
+       some point in the future.
+****** DONE Interface.hs 
+       Create UDP sockets, and turn them into abstract connections.
+****** DONE Relay.hs
+       Contains a function which spawns a send and receive thread which
+       reads from a queue of packets and writes to a queue of packets,
+       given a connection function.
+****** Stun.hs
+       Currently not in use, but contains experimental stubs for
+       creating STUNned connections.
 ***** DONE Routing
-      Contains functions to build routers and route packets.
-***** DONE RoutingTable /RoutingTable. Internal
-      Contains functions for building and manipulating routing tables.
-**** DONE Types.hs/Utils.hs
-     Types.hs and Utils.hs could use a little rearranging. They contain
-     types and functions for ubiquitous data.
-     
-* Ongoing tasks
-*** TODO Manage.hs
-    The code should be polished to make it as readable as possible.
-*** TODO Manager.hs
-    Factor out submanager tracking?
-*** TODO Network
-    Embellish and improve network tools, i.e. creating TUN devices.
-* Architectural overview
-  Here we present a basic overview of how the VPN works internally. We
-  start with an overview of the core of the application, before
-  looking more closely at how the individual components work.
-** Core components
-   At its core the VPN is just a router, consisting of a lookup table
-   describing a mapping of virtual addresses to enpoints. The core of the
-   application is heavily threaded, with packets (`ByteStrings`) passed
-   around on Queues between threads for processing. Threads in Haskell
-   are cheap (they are implemented as user space threads on top of a pool
-   of OS threads), and so they are used liberally, and Software
-   Transactional Memory provides exception safe threadsafe data passing.
-
-   There are several threads which form the backbone of the
-   application. If one of these fails, the entire application should fail
-   gracefully, and so they are specified as a linked data structure,
-   called a `Stack`. Running the stack consists of instantiating these
-   threads in such a way that an exception in one brings the rest down
-   cleanly. This is defined in Control.Concurrent.Stack.
-
-   Our stack of critical threads consists of the following:
-     1. the routing thread
-     2. a thread pulling packets off of a tun device
-     3. a thread putting packets on to a tun device
-     4. a root Manager instance --- connections are spawned from this
-        and the Queues (for thread communication) placed in the
-        routing table.
-     5. a command thread; this is presently a primitive command line
-        interface, but in the future will be more sophisticated,
-        looking to an external bootstrap node to gather information on
-        the network, and creating/authenticating connections etc.
-
-   The code for the routing, and reading and writing to the tun device
-   is reasonably straightforward. The tun device has a small C driver
-   which is interfaced to Haskell, and then operated with a bracketed
-   operation `withTUN`, which ensures exception safety.
-* Automating connections
-  Want to load a configuration file and then automatically connect to
-  our network. Need a central point of truth and an interface to this
-  point.
-** Requirements for central bootstrapping node
-   Ultimately we need this to do STUN. We only want to connect with
-   endpoints which are trusted. A central node is perhaps the most
-   vulnerable point, so security of the entire network should not
-   depend on the security of the central node. However, the central
-   node should not contain excessive information.
-
-   So:
-   1. TLS by default (of course).
-   2. Endpoints can write to server if the endpoint has the
-      appropriate key on the machine.
-   3. Access rights tied to what key you are using. Each network has
-      several directories for communicating and keeping track of the
-      state of the network. There is
-
-      a) a list of connected nodes (possibly using hashes of some
-      descriptor to describe them). Accessible to anyone with a valid
-      network certificate.
-      b) a store of public keys which is not readable by anyone apart
-      from the node. However, it is writable indirectly by the nodes
-      to introduce new trusted nodes, and distrust (possibly
-      compromised) nodes.
+****** DONE Routing
+       Contains functions to build routers and route packets.
+****** DONE RoutingTable /RoutingTable. Internal
+       Contains functions for building and manipulating routing tables.
+***** DONE Types.hs/Utils.hs
+      Types.hs and Utils.hs could use a little rearranging. They contain
+      types and functions for ubiquitous data.
       
-      each node has
+** Ongoing tasks
+**** TODO Manage.hs
+     The code should be polished to make it as readable as possible.
+**** TODO Manager.hs
+     Factor out submanager tracking?
+**** TODO Network
+     Embellish and improve network tools, i.e. creating TUN devices.
+** Architectural overview
+   Here we present a basic overview of how the VPN works internally. We
+   start with an overview of the core of the application, before
+   looking more closely at how the individual components work.
+*** Core components
+    At its core the VPN is just a router, consisting of a lookup table
+    describing a mapping of virtual addresses to enpoints. The core of the
+    application is heavily threaded, with packets (`ByteStrings`) passed
+    around on Queues between threads for processing. Threads in Haskell
+    are cheap (they are implemented as user space threads on top of a pool
+    of OS threads), and so they are used liberally, and Software
+    Transactional Memory provides exception safe threadsafe data passing.
 
-      c) an announce space where messages can be put
-      d) a request space where other nodes can write requests (but not
-      read).
+    There are several threads which form the backbone of the
+    application. If one of these fails, the entire application should fail
+    gracefully, and so they are specified as a linked data structure,
+    called a `Stack`. Running the stack consists of instantiating these
+    threads in such a way that an exception in one brings the rest down
+    cleanly. This is defined in Control.Concurrent.Stack.
 
-   New users can be added by generating one use only keys to set up an
-   initial connection, and then generating a new key for use in the
-   network. This new key can be shared around the already established
-   network using the peer-to-peer connections, so that encrpytion can
-   be guaranteed to be end-to-end.
+    Our stack of critical threads consists of the following:
+      1. the routing thread
+      2. a thread pulling packets off of a tun device
+      3. a thread putting packets on to a tun device
+      4. a root Manager instance --- connections are spawned from this
+         and the Queues (for thread communication) placed in the
+         routing table.
+      5. a command thread; this is presently a primitive command line
+         interface, but in the future will be more sophisticated,
+         looking to an external bootstrap node to gather information on
+         the network, and creating/authenticating connections etc.
+
+    The code for the routing, and reading and writing to the tun device
+    is reasonably straightforward. The tun device has a small C driver
+    which is interfaced to Haskell, and then operated with a bracketed
+    operation `withTUN`, which ensures exception safety.
+** Automating connections
+   Want to load a configuration file and then automatically connect to
+   our network. Need a central point of truth and an interface to this
+   point.
+*** Requirements for central bootstrapping node
+    Ultimately we need this to do STUN. We only want to connect with
+    endpoints which are trusted. A central node is perhaps the most
+    vulnerable point, so security of the entire network should not
+    depend on the security of the central node. However, the central
+    node should not contain excessive information.
+
+    So:
+    1. TLS by default (of course).
+    2. Endpoints can write to server if the endpoint has the
+       appropriate key on the machine.
+    3. Access rights tied to what key you are using. Each network has
+       several directories for communicating and keeping track of the
+       state of the network. There is
+
+       a) a list of connected nodes (possibly using hashes of some
+       descriptor to describe them). Accessible to anyone with a valid
+       network certificate.
+       b) a store of public keys which is not readable by anyone apart
+       from the node. However, it is writable indirectly by the nodes
+       to introduce new trusted nodes, and distrust (possibly
+       compromised) nodes.
+       
+       each node has
+
+       c) an announce space where messages can be put
+       d) a request space where other nodes can write requests (but not
+       read).
+
+    New users can be added by generating one use only keys to set up an
+    initial connection, and then generating a new key for use in the
+    network. This new key can be shared around the already established
+    network using the peer-to-peer connections, so that encrpytion can
+    be guaranteed to be end-to-end.
+
+* New notes and tasks
+  Around September 2016, it was decided that the software should be divided in to two components, a piece to manage the dataplane, and another piece to manage to control plane.
+** Overview
+- Dataplane
+  1. Can provide a record of the current state of connections between nodes in the network
+  2. Can initiate new connections to nodes in the network if asked
+  3. Can time out connections / connection attempts if it needs to
+  4. Can enforce certain policies about connections that are made (e.g. all authenticated, and encrypted). These settings would be global, and not fine grained.
+  5. Is responsible for maintaining connections until it is asked to pull them down.
+  6. Creates and manages certificates, identities, keys etc. for individual connections.
+- Control plane
+  1. Has the overall view of what the network should look like.
+  2. Can ask the dataplane what the network currently looks like.
+  3. Can ask the dataplane to create a certain kind of connection.
+  4. Makes the decisions over which connections should be set up and torn down.
+  5. Maintains certificates/keys etc. for connections to the bootstrapping node.
+  6. Can ask the dataplane to create (ephemeral) credentials for a new endpoint.
+** Dataplane
+*** Unix socket API
+**** [2/5] Tasks
+***** DONE Create functions to manage unix socket
+***** DONE Attach parser to grab HTTP requests
+***** TODO Refactor Manager so it can be used for control environment 
+***** TODO Design API
+***** TODO Implement API and plumbing for direct connection
