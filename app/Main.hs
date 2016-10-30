@@ -18,7 +18,7 @@ import Manager
 
 import Command
 import Command.Types (postCommand)
-import Command.ControlTypes (runControl, ControlEnvironment(..))
+import Command.ControlTypes (takeControlOf, ControlEnvironment(..))
 import Command.Control (controller)
 
 import Types
@@ -70,7 +70,8 @@ core tt config =
     -- Lastly we start the command line
     let cq = commandQueue env
         post = postCommand cq
-    register $ controller controlSocket (ControlEnvironment post)
+    register $ withControlSocket controlSocket $ \sock ->
+      controller `takeControlOf` ControlEnvironment sock post
 
     where
 

@@ -1,14 +1,18 @@
 module Command.ControlTypes
 ( ControlEnvironment(..)
 , Control
-, runControl ) where
+, takeControlOf
+, withEnvironment ) where
+ 
 
+import Network.Socket ( Socket )
 import Command.Types (Command)
-import Control.Monad.Trans.Reader (ReaderT, runReaderT)
+import Control.Concurrent.TreeThreads ( TreeThread, sproutOn, withEnvironment )
 
-data ControlEnvironment = ControlEnvironment { sendCommand :: Command -> IO () }
+data ControlEnvironment = ControlEnvironment { controlSocket :: Socket
+                                             , sendCommand :: Command -> IO () }
 
-type Control = ReaderT ControlEnvironment IO
+type Control = TreeThread ControlEnvironment
 
-runControl :: Control () -> ControlEnvironment -> IO ()
-runControl ctl controlenv = runReaderT ctl $ controlenv
+takeControlOf :: Control () -> ControlEnvironment -> IO ()
+takeControlOf = sproutOn

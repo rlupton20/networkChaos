@@ -85,6 +85,8 @@ test-suite vanguard-test
                       , transformers
                       , mtl
                       , time
+                      , network
+                      , unix
                       , yaml
                       , tree-threads
   ghc-options:         	-threaded -rtsopts -with-rtsopts=-N
