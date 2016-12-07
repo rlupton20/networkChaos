@@ -3,20 +3,22 @@ let
 
   inherit (nixpkgs) pkgs ;
 
-  tools = with pkgs; with pkgs.haskellPackages; [
-  cabal-install stack ghc happy ghc-mod
-  hindent hlint hasktags hoogle
-  stylish-haskell structured-haskell-mode
-  ];
+  ghc = haskellPackages.ghcWithHoogle(packages: with packages; [
+          cabal-install happy ghc-mod
+          hindent hlint hasktags 
+          stylish-haskell structured-haskell-mode
+          ]);
+
+  tools = [ ghc pkgs.stack ];
 
   haskellPackages = if compiler == "default"
                        then pkgs.haskellPackages
                        else pkgs.haskell.packages.${compiler};
 
   treeThreads = haskellPackages.callPackage ./tree-threads.nix {};
-  drv = haskellPackages.callPackage ./vanguard.nix { additionalTools = tools; 
-                                                     tree-threads = treeThreads; };
+  vanguard = haskellPackages.callPackage ./vanguard.nix { additionalTools = tools; 
+                                                          tree-threads = treeThreads; };
 
 in
 
-  if pkgs.lib.inNixShell then drv.env else drv
+  if pkgs.lib.inNixShell then vanguard.env else vanguard
