@@ -9,7 +9,7 @@ module Command.ControlTypes
  
 
 import Network.Socket ( Socket )
-import Command.Types (Command)
+import Manager (Command)
 import Control.Concurrent.TreeThreads ( TreeThread, Branch
                                       , sproutOn, sprout
                                       , environment, withEnvironment, local )

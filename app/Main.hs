@@ -17,7 +17,6 @@ import Relay.Relay
 import Manager
 
 import Command
-import Command.Types (postCommand)
 import Command.ControlTypes (takeControlOf, ControlEnvironment(..))
 import Command.Control (controller)
 

@@ -27,7 +27,6 @@ executable vanguard
                      , Types
                      , Utils
                      , Command
-                     , Command.Types
                      , Command.ControlTypes
                      , Command.Control
                      , Network.TunTap
@@ -71,7 +70,6 @@ test-suite vanguard-test
                       , Routing.RoutingTableTest
                       , Routing.RoutingTable
                       , Routing.RoutingTable.Internal
-                      , Command.Types
   build-depends:	base
                       , HUnit
                       , QuickCheck

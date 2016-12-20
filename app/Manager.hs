@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 module Manager
 ( Environment(..)
 , Manager
@@ -5,20 +6,43 @@ module Manager
 , makeManaged
 , spawn
 , environment
-, withEnvironment ) where
+, withEnvironment
+, CommandQueue
+, ManagerCommand(..)
+, Command(..)
+, getCommand
+, postCommand
+, newCommandQueue )where
 
 
-import Command.Types ( CommandQueue, newCommandQueue )
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TMVar (TMVar)
+import Control.Concurrent.STM.TQueue ( TQueue, newTQueueIO
+                                     , readTQueue, writeTQueue )
+
 import Routing.RoutingTable ( RoutingTable )
-  
 import Control.Concurrent.TreeThreads
 
 
+-- |Environment contains all the data that the Manager threads need
+-- to be able to access.
 data Environment = Environment { routingTable :: RoutingTable
                                , commandQueue :: CommandQueue }
 
-
+-- |Managers form a tree of threads which act on the Environment
 type Manager = TreeThread Environment
+
+-- |We would like to be able to pass commands to a central manager
+-- which spawns sub-Managers to alter the environment. In order to keep
+-- this abstract and extensible, a command is just something we can
+-- interpret inside a manager. ManagerCommand is a typeclass which encodes
+-- this.
+class ManagerCommand c where
+  command :: c -> Manager ()
+
+-- A command is either a call to exit, or something which has an
+-- interpretation in terms of a Manager.
+data Command = Quit | forall c . ManagerCommand c => Command c 
 
   
 -- |makeManaged takes a RoutingTable, and creates a fresh
@@ -29,9 +53,30 @@ makeManaged table = do
   return $ Environment table commands
 
  
+-- |Reduce a Manager () to an IO ()
 manage :: Manager () -> Environment -> IO ()
 manage = sproutOn
 
 
 --spawn :: Manager () -> Manager Branch
 spawn = sprout
+
+
+-- |CommandQueue is an abstraction of the programs internal list of
+-- pending commands.
+data CommandQueue = CommandQueue (TQueue Command)
+
+-- |getCommand is a utility wrapper for fetching the next command
+getCommand :: CommandQueue -> IO Command
+getCommand cq = let (CommandQueue q) = cq in atomically $ readTQueue q
+
+-- |postCommand is a utility wrapper for posting a command
+postCommand :: CommandQueue -> Command -> IO ()
+postCommand cq c = let (CommandQueue q) = cq in atomically $ writeTQueue q c
+
+-- |newCommandQueue provides us with a new CommandQueue
+newCommandQueue :: IO CommandQueue
+newCommandQueue = do
+  q <- newTQueueIO
+  return (CommandQueue q)
+
