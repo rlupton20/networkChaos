@@ -27,7 +27,6 @@ executable vanguard
                      , Types
                      , Utils
                      , Command
-                     , Command.ControlTypes
                      , Command.Control
                      , Network.TunTap
   other-extensions:    BangPatterns
@@ -53,8 +52,10 @@ executable vanguard
                      , unix-bytestring
                      , stunclient
                      , yaml
-                     , HTTP
                      , tree-threads
+                     , wai
+                     , warp
+                     , http-types
   hs-source-dirs:      app
   c-sources:	       app/Network/tuntap.c
   ghc-options:	       -O2 -threaded

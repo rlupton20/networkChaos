@@ -2,51 +2,22 @@
 module Command.Control
 ( controller ) where
 
-import Control.Monad ( unless )
-import Control.Monad.IO.Class ( MonadIO, liftIO )
-import Network.Socket ( Socket, listen, accept )
-import Network.Socket.ByteString ( send, recv )
-
 import Data.ByteString ( ByteString )
-import Network.TCP ( socketConnection )
-import Network.HTTP ( HandleStream, receiveHTTP, Request(rqBody) )
+import Network.Socket (Socket, listen)
 
-import Command.ControlTypes ( Control, ControlEnvironment(..)
-                            , forkWith, environment, withEnvironment, local )
+import Network.Wai (Application, responseLBS)
+import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, setPort)
+import Network.HTTP.Types (status200)
+import Network.HTTP.Types.Header (hContentType)
 
-import Data.String ( IsString ) -- Will be removed when API is properly written
+import Manager (Command)
 
+controller :: Socket -> (Command -> IO ()) ->  IO ()
+controller sock post = do
+    listen sock 5
+    let settings = setPort 3000 defaultSettings
+    runSettingsSocket settings sock (control post)
 
-controller :: Control ()
-controller = do
-    sock <- withEnvironment controlSocket
-    liftIO $ listen sock 5
-    server
-    
-
-server :: Control ()
-server = do
-  sock <- withEnvironment controlSocket
-  loop sock
-  where
-    loop :: Socket -> Control ()
-    loop sock = do
-      (conn, _) <- liftIO $ accept sock
-      workFromSocket conn $ forkWith process
-      loop sock
-
-    workFromSocket :: Socket -> Control a -> Control a
-    workFromSocket sock ctl = do
-      env <- environment
-      local (const $ env { controlSocket = sock }) ctl
-  
-
-process :: Control ()
-process = do
-  sock <- withEnvironment controlSocket
-  liftIO $ do
-    hs <- socketConnection "Client" 0 sock :: IO (HandleStream ByteString)
-    req <- receiveHTTP hs
-    case req of
-      Right request -> putStrLn $ "Got request " ++ show request
-      Left _ -> putStrLn "Error"
+control :: (Command -> IO ()) -> Application
+control post _ respond = respond $
+  responseLBS status200 [(hContentType, "text/plain")] "Unix socket on vanguard"

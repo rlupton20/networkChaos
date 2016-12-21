@@ -17,7 +17,6 @@ import Relay.Relay
 import Manager
 
 import Command
-import Command.ControlTypes (takeControlOf, ControlEnvironment(..))
 import Command.Control (controller)
 
 import Types
@@ -70,7 +69,7 @@ core tt config =
     let cq = commandQueue env
         post = postCommand cq
     register $ withControlSocket controlSocket $ \sock ->
-      controller `takeControlOf` ControlEnvironment sock post
+      controller sock post
 
     where
 

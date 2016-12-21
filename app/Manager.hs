@@ -12,7 +12,7 @@ module Manager
 , Command(..)
 , getCommand
 , postCommand
-, newCommandQueue )where
+, newCommandQueue ) where
 
 
 import Control.Concurrent.STM (atomically)
