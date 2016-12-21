@@ -12,6 +12,8 @@ import Network.HTTP.Types.Header (hContentType)
 
 import Manager (Command)
 
+import Command.Algebra (IConnection)
+
 controller :: Socket -> (Command -> IO ()) ->  IO ()
 controller sock post = do
     listen sock 5
@@ -21,3 +23,4 @@ controller sock post = do
 control :: (Command -> IO ()) -> Application
 control post _ respond = respond $
   responseLBS status200 [(hContentType, "text/plain")] "Unix socket on vanguard"
+

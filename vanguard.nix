@@ -5,7 +5,7 @@
 , stunclient, test-framework, test-framework-hunit
 , test-framework-quickcheck2, time, tls, transformers
 , unbounded-delays, unix, unix-bytestring, yaml, wai, warp
-, http-types, tree-threads 
+, http-types, free, tree-threads 
 , additionalTools ? []
 }:
 mkDerivation {
@@ -22,7 +22,7 @@ mkDerivation {
     async base bytestring cereal connection containers
     data-default-class http-client http-client-tls mtl network
     network-house stm stunclient tls transformers unbounded-delays unix
-    unix-bytestring yaml wai warp tree-threads
+    unix-bytestring yaml wai warp free tree-threads
   ];
   testHaskellDepends = [
     # System dependencies
@@ -31,7 +31,7 @@ mkDerivation {
     async base bytestring connection containers data-default-class
     http-client http-client-tls HUnit mtl QuickCheck stm test-framework
     test-framework-hunit test-framework-quickcheck2 time tls
-    transformers yaml http-types tree-threads
+    transformers yaml http-types free tree-threads
   ];
   homepage = "https://github.com/rlupton20/networkChaos";
   description = "A peer-to-peer VPN";

@@ -355,3 +355,8 @@ here.
 ***** TODO Refactor Manager so it can be used for control environment 
 ***** TODO Design API
 ***** TODO Implement API and plumbing for direct connection
+** API notes
+*** Creating a STUNned socket
+    POST/PUT to create a STUNned socket (returns address) : newSocket (take user, yield Socket), stunSocket (take socket, yield address)
+    Update (PUT) to connect (connectSocket (yieldSuccess or failure))
+    DELETE to tear down. (delete : take user, yield ())

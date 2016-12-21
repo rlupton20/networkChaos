@@ -56,6 +56,7 @@ executable vanguard
                      , wai
                      , warp
                      , http-types
+                     , free
   hs-source-dirs:      app
   c-sources:	       app/Network/tuntap.c
   ghc-options:	       -O2 -threaded
