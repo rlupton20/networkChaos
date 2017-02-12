@@ -30,7 +30,6 @@ add l e@(r,p) s = do
   env <- environment
   liftIO $ covering s $ do
     q <- newQueue
-    putStrLn "Connecting..."
     withRoute (routingTable env) (l #-> (r,q)) $
       makeRelay s (getInjector . routingTable $ env) q e
   where
@@ -45,7 +44,6 @@ makeRelay s inj q (a,p) = do
   where
     dispatch q dest = forever $ do
       bs <- readQueue q
-      putStrLn "dispatching!"
       sendTo s bs dest
 
     inject s = forever $ do
