@@ -11,6 +11,7 @@ import Data.ByteString.Lazy (ByteString, append)
 
 
 import Command.Control
+import Command.Types
 import Core
 
 controlTest :: TF.Test

@@ -25,6 +25,7 @@ import Routing.RoutingTable ( RoutingTable )
 import Control.Concurrent.TreeThreads
 import Control.Monad.IO.Class (liftIO)
 
+import Command.Types (Pending, newPending)
 import Core (Addr)
 import Network (Socket)
 
@@ -32,7 +33,8 @@ import Network (Socket)
 -- |Environment contains all the data that the Manager threads need
 -- to be able to access.
 data Environment = Environment { routingTable :: RoutingTable
-                               , commandQueue :: CommandQueue }
+                               , commandQueue :: CommandQueue
+                               , pending :: Pending }
 
 -- |Managers form a tree of threads which act on the Environment
 type Manager = TreeThread Environment
@@ -53,7 +55,8 @@ remove _ = liftIO $ putStrLn "remove"
 makeManaged :: RoutingTable -> IO Environment
 makeManaged table = do
   commands <- newCommandQueue
-  return $ Environment table commands
+  pen <- newPending
+  return $ Environment table commands pen
 
 
 -- |Reduce a Manager () to an IO ()
