@@ -18,7 +18,8 @@ controlTest :: TF.Test
 controlTest = testGroup "Control.hs tests" $ hUnitTestToTests $
                HU.TestList [ testRejectsBadRequest
                            , testCanParseNewConnection
-                           , testRejectsBadDataOnNewConnection ]
+                           , testRejectsBadDataOnNewConnection
+                           , testCanParseConnectMessage ]
 
 testRejectsBadRequest :: HU.Test
 testRejectsBadRequest = "Request: check bad request is recognized" ~: test
@@ -49,4 +50,11 @@ testRejectsBadDataOnNewConnection = "New: Reject bad data on new connection" ~: 
     test = let json = "{ \"request\" : \"new\", " `append`
                         "\"endpoint\" : 5 }"
                expected = BadRequest in
+             Just expected @=? decode json
+
+testCanParseConnectMessage :: HU.Test
+testCanParseConnectMessage = "Connect: Can parse connect message" ~: test
+  where
+    test = let json = "{\"request\" : \"connect\", \"uid\" : 234}"
+               expected = Connect 234 in
              Just expected @=? decode json

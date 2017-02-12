@@ -62,6 +62,8 @@ control env request respond = dispatch `actingOn` env
                       postCommand (commandQueue env) (Add (virtualip r) s)
                       return . Right $ OK
                     Nothing -> return $ Left 404
+
+                BadRequest -> return $ Left 404
                   
         case js of
           (Right json) -> respondJSON status200 (A.encode json)

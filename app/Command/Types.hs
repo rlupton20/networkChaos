@@ -29,7 +29,9 @@ instance A.FromJSON Request where
     Just (A.String "new") -> case HM.lookup "endpoint" o of
       Just (A.Object _) -> New <$> o .: "endpoint"
       _ -> pure BadRequest
-    Just (A.String "connect") -> Connect <$> o .: "connect"
+    Just (A.String "connect") -> case HM.lookup "uid" o of
+      Just (A.Number _) -> Connect <$> o .: "uid"
+      _ -> pure BadRequest
     _ -> pure BadRequest
 
 instance A.ToJSON Response where
