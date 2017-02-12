@@ -46,7 +46,8 @@ control env request respond = dispatch `actingOn` env
     dispatch = do
       env <- ask
       liftIO $ do
-        (Just cmd) <- A.decode <$> lazyRequestBody request
+        raw <- lazyRequestBody request
+        let (Just cmd) = A.decode raw :: Maybe Request
         js <- case cmd of
                 New endpoint -> withProtectedBoundUDPSocket $ \sock -> do
                   ip <- getAddr (routingTable env)
@@ -55,7 +56,7 @@ control env request respond = dispatch `actingOn` env
                   close sock
                   return json 
         postCommand (commandQueue env) (Add undefined undefined)
-        respond $ responseLBS status200 [(hContentType, "text/plain")] ""
+        respond $ responseLBS status200 [(hContentType, "text/plain")] js
 
 data Connection = Connection { virtualip :: Addr
                              , ip :: Addr
