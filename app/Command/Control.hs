@@ -8,7 +8,7 @@ import Network.Socket (Socket, listen)
 
 import Network.Wai (Application, responseLBS, lazyRequestBody)
 import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, setPort)
-import Network.HTTP.Types (status200, status404)
+import Network.HTTP.Types (status200, notFound404, notAcceptable406)
 import Network.HTTP.Types.Header (hContentType)
 
 import qualified Data.Aeson as A
@@ -47,7 +47,9 @@ control env request respond = dispatch `actingOn` env
         js <- maybe (return $ Left 406) action $ (A.decode raw :: Maybe Request)
         case js of
           (Right json) -> respondJSON status200 (A.encode json)
-          (Left 404) -> respondJSON status404 ""
+          (Left 404) -> respondJSON notFound404 ""
+          (Left 406) -> respondJSON notAcceptable406 ""
+          (Left _) -> respondJSON notAcceptable406 ""
 
     action :: Request -> IO (Either Int Response)
     action cmd = case cmd of
