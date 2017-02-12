@@ -21,20 +21,24 @@ data Connection = Connection { virtualip :: Addr
 instance A.FromJSON Connection
 instance A.ToJSON Connection
 
-data Request = New Connection | BadRequest deriving (Eq, Show)
-data Response = ListeningOn Int Connection deriving (Show)
+data Request = New Connection | Connect Int | BadRequest deriving (Eq, Show)
+data Response = ListeningOn Int Connection | OK deriving (Show)
 
 instance A.FromJSON Request where
   parseJSON (A.Object o) = case HM.lookup "request" o of
     Just (A.String "new") -> case HM.lookup "endpoint" o of
       Just (A.Object _) -> New <$> o .: "endpoint"
       _ -> pure BadRequest
+    Just (A.String "connect") -> Connect <$> o .: "connect"
     _ -> pure BadRequest
 
 instance A.ToJSON Response where
   toJSON (ListeningOn uid connection) = A.object $
     [ "listening" .= A.Number (fromIntegral uid)
     , "endpoint" .= A.toJSON connection ]
+  toJSON OK = A.String "OK"
+
+
 
 
 data PartialConnection = PC { remote :: Connection
@@ -51,8 +55,8 @@ newPending = fmap Pending . newTVarIO $ HM.empty
 addPending :: Pending -> Int -> PartialConnection -> IO ()
 addPending (Pending p) uid pc  = atomically $ modifyTVar' p (HM.insert uid pc)
 
-retrievePending :: Int -> Pending -> IO (Maybe PartialConnection)
-retrievePending uid (Pending p) = atomically $ do
+retrievePending :: Pending -> Int -> IO (Maybe PartialConnection)
+retrievePending (Pending p) uid  = atomically $ do
   m <- readTVar p
   let (m', pcm) = swapOut m uid
   case pcm of

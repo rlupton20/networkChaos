@@ -8,7 +8,7 @@ import Network.Socket (Socket, listen)
 
 import Network.Wai (Application, responseLBS, lazyRequestBody)
 import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, setPort)
-import Network.HTTP.Types (status200)
+import Network.HTTP.Types (status200, status404)
 import Network.HTTP.Types.Header (hContentType)
 
 import qualified Data.Aeson as A
@@ -46,12 +46,26 @@ control env request respond = dispatch `actingOn` env
         raw <- lazyRequestBody request
         let (Just cmd) = A.decode raw :: Maybe Request
         js <- case cmd of
+
                 New endpoint -> withProtectedBoundUDPSocket $ \sock -> do
                   ip <- getAddr (routingTable env)
                   Just (vip, p) <- describeSocket sock
                   uid <- hashUnique <$> newUnique
                   let c = Connection ip vip (fromIntegral p)
                   addPending (pending env) uid $ PC endpoint c sock
-                  return $ ListeningOn uid c
-        postCommand (commandQueue env) (Add undefined undefined)
-        respond $ responseLBS status200 [(hContentType, "text/plain")] (A.encode js)
+                  return . Right $ ListeningOn uid c
+
+                Connect uid -> do
+                  lu <- retrievePending (pending env) uid
+                  case lu of
+                    (Just (PC r l s)) -> do
+                      postCommand (commandQueue env) (Add (virtualip r) s)
+                      return . Right $ OK
+                    Nothing -> return $ Left 404
+                  
+        case js of
+          (Right json) -> respondJSON status200 (A.encode json)
+          (Left 404) -> respondJSON status404 ""
+
+    respondJSON status message =
+      respond $ responseLBS status [(hContentType, "application/json")] message
