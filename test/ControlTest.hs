@@ -17,9 +17,10 @@ import Core
 controlTest :: TF.Test
 controlTest = testGroup "Control.hs tests" $ hUnitTestToTests $
                HU.TestList [ testRejectsBadRequest
-                           , testCanParseNewConnection
-                           , testRejectsBadDataOnNewConnection
-                           , testCanParseConnectMessage ]
+                           , testCanParseDevelopConnection
+                           , testRejectsBadDataOnDevelopConnection
+                           , testCanParseConnectMessage
+                           , testCanParseNewConnection ]
 
 testRejectsBadRequest :: HU.Test
 testRejectsBadRequest = "Request: check bad request is recognized" ~: test
@@ -29,10 +30,10 @@ testRejectsBadRequest = "Request: check bad request is recognized" ~: test
              Just expected @=? decode json
 
 
-testCanParseNewConnection :: HU.Test
-testCanParseNewConnection = "New: Can parse new connection command" ~: test
+testCanParseDevelopConnection :: HU.Test
+testCanParseDevelopConnection = "Develop: Can parse develop connection command" ~: test
   where
-    test = let json = "{ \"request\" : \"new\", " `append`
+    test = let json = "{ \"request\" : \"develop\", " `append`
                         "\"endpoint\" : {" `append`
                           "\"virtualip\" : [1,2,211,56]," `append`
                           "\"ip\": [44,33,22,11]," `append`
@@ -40,14 +41,14 @@ testCanParseNewConnection = "New: Can parse new connection command" ~: test
                (Just vip) = addr "1.2.211.56"
                (Just ip) = addr "44.33.22.11"
                port = 678
-               expected = New $ Connection vip ip port in
+               expected = Develop $ Connection vip ip port in
              Just expected @=? decode json
-                         
 
-testRejectsBadDataOnNewConnection :: HU.Test
-testRejectsBadDataOnNewConnection = "New: Reject bad data on new connection" ~: test
+
+testRejectsBadDataOnDevelopConnection :: HU.Test
+testRejectsBadDataOnDevelopConnection = "Develop: Reject bad data on new connection" ~: test
   where
-    test = let json = "{ \"request\" : \"new\", " `append`
+    test = let json = "{ \"request\" : \"develop\", " `append`
                         "\"endpoint\" : 5 }"
                expected = BadRequest in
              Just expected @=? decode json
@@ -55,6 +56,20 @@ testRejectsBadDataOnNewConnection = "New: Reject bad data on new connection" ~: 
 testCanParseConnectMessage :: HU.Test
 testCanParseConnectMessage = "Connect: Can parse connect message" ~: test
   where
-    test = let json = "{\"request\" : \"connect\", \"uid\" : 234}"
-               expected = Connect 234 in
+    test = let json = "{\"request\" : \"connect\", \"uid\" : 234," `append`
+                       "\"endpoint\" : {" `append`
+                          "\"virtualip\" : [11,22,33,44]," `append`
+                          "\"ip\": [255,127,63,31]," `append`
+                          "\"port\": 58000 }}"
+               (Just vip) = addr "11.22.33.44"
+               (Just ip) = addr "255.127.63.31"
+               port = 58000
+               expected = Connect 234 $ Connection vip ip port in
+             Just expected @=? decode json
+
+testCanParseNewConnection :: HU.Test
+testCanParseNewConnection = "New: test can parse new connection" ~: test
+  where
+    test = let json = "{ \"request\" : \"new\" }"
+               expected = New in
              Just expected @=? decode json

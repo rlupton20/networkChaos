@@ -51,36 +51,47 @@ control env request respond = dispatch `actingOn` env
 
     action :: Request -> IO (Either Int Response)
     action cmd = case cmd of
-      New endpoint -> new endpoint `actingOn` env
-      Connect uid -> connect uid `actingOn` env
+      Develop endpoint -> develop endpoint `actingOn` env
+      Connect uid r -> connect uid r `actingOn` env
+      New -> new `actingOn` env
       BadRequest -> return $ Left 404
 
     respondJSON status message =
       respond $ responseLBS status [(hContentType, "application/json")] message
 
 
-new :: Connection -> Controller (Either Int Response)
-new endpoint = do
+develop :: Connection -> Controller (Either Int Response)
+develop endpoint = do
   env <- ask
   liftIO $ withProtectedBoundUDPSocket $ \sock -> do
-    ip <- getAddr (routingTable env)
-    Just (vip, p) <- describeSocket sock
-    uid <- hashUnique <$> newUnique
-    let c = Connection ip vip (fromIntegral p)
-    addPending (pending env) uid $ PC endpoint c sock
-    return . Right $ ListeningOn uid c
+    vip <- getAddr (routingTable env)
+    Just (gip, p) <- describeSocket sock
+    let c = Connection vip gip (fromIntegral p)
+        message = Add (virtualip endpoint) (ip endpoint, fromIntegral $ port endpoint) sock
+    postCommand (commandQueue env) message
+    return . Right $ ListeningOn 0 c
 
-connect :: Int -> Controller (Either Int Response)
-connect uid = do
+connect :: Int -> Connection -> Controller (Either Int Response)
+connect uid r = do
   env <- ask
   liftIO $ do
     lu <- retrievePending (pending env) uid
     case lu of
-      (Just (PC r l s)) -> do
+      (Just (PC l s)) -> do
         let message = Add (virtualip r) (ip r, fromIntegral $ port r) s
         postCommand (commandQueue env) message
         return . Right $ OK
       Nothing -> return $ Left 404
 
+new :: Controller (Either Int Response)
+new = do
+  env <- ask
+  liftIO $ withProtectedBoundUDPSocket $ \sock -> do
+    vip <- getAddr (routingTable env)
+    Just (gip, p) <- describeSocket sock
+    let c = Connection vip gip (fromIntegral p)
+    uid <- hashUnique <$> newUnique
+    addPending (pending env) uid $ PC c sock
+    return . Right $ ListeningOn uid c
 
 

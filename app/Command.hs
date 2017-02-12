@@ -39,7 +39,7 @@ add l e@(r,p) s = do
 
 makeRelay :: Socket -> Injector -> PacketQueue -> (Addr, PortNumber) -> IO ()
 makeRelay s inj q (a,p) = do
-  let dest = buildAddress a p 
+  let dest = buildAddress a p
   race_ (dispatch q dest) (inject s)
   where
     dispatch q dest = forever $ do
@@ -48,8 +48,8 @@ makeRelay s inj q (a,p) = do
 
     inject s = forever $ do
       bs <- recv s 4096
-      bs `passTo` inj 
-      
+      bs `passTo` inj
+
 
 remove :: Addr -> Manager ()
 remove _ = liftIO $ putStrLn "remove"

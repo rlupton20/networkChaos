@@ -21,17 +21,23 @@ data Connection = Connection { virtualip :: Addr
 instance A.FromJSON Connection
 instance A.ToJSON Connection
 
-data Request = New Connection | Connect Int | BadRequest deriving (Eq, Show)
+data Request = Develop Connection
+             | Connect Int Connection
+             | New
+             | BadRequest deriving (Eq, Show)
 data Response = ListeningOn Int Connection | OK deriving (Show)
 
 instance A.FromJSON Request where
   parseJSON (A.Object o) = case HM.lookup "request" o of
-    Just (A.String "new") -> case HM.lookup "endpoint" o of
-      Just (A.Object _) -> New <$> o .: "endpoint"
+    Just (A.String "develop") -> case HM.lookup "endpoint" o of
+      Just (A.Object _) -> Develop <$> o .: "endpoint"
       _ -> pure BadRequest
     Just (A.String "connect") -> case HM.lookup "uid" o of
-      Just (A.Number _) -> Connect <$> o .: "uid"
+      Just (A.Number _) -> case HM.lookup "endpoint" o of
+        Just (A.Object _) -> Connect <$> o .: "uid" <*> o .: "endpoint"
+        _ -> pure BadRequest
       _ -> pure BadRequest
+    Just (A.String "new") -> pure New
     _ -> pure BadRequest
 
 instance A.ToJSON Response where
@@ -43,8 +49,7 @@ instance A.ToJSON Response where
 
 
 
-data PartialConnection = PC { remote :: Connection
-                            , local :: Connection
+data PartialConnection = PC { local :: Connection
                             , sock :: Socket }
 
 type PendingM = HM.HashMap Int PartialConnection
