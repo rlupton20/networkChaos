@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
-module Command.Control
-( controller
-, actingOn ) where
+module Command.Control where
+--( controller
+--, actingOn ) where
 
 import Data.ByteString ( ByteString )
 import Network.Socket (Socket, listen)
@@ -11,8 +11,12 @@ import Network.Wai (Application, responseLBS)
 import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, setPort)
 import Network.HTTP.Types (status200)
 import Network.HTTP.Types.Header (hContentType)
-import Data.Aeson (FromJSON, ToJSON, encode)
+import qualified Data.Aeson as A
+import Data.Aeson ((.:))
+import Control.Applicative ((<$>))
 import GHC.Generics (Generic)
+-- import Data.Text (Text)
+import qualified Data.HashMap.Lazy as HM
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
@@ -45,12 +49,21 @@ control env _ respond = dispatch `actingOn` env
     (Just a) = addr "0.0.0.0"
     (Just b) = addr "1.1.1.1"
 
-    js = encode $ NewConnection a b 10
+    js = A.encode $ Connection a b 10
 
+data Connection = Connection { virtualip :: Addr
+                             , ip :: Addr
+                             , port :: Int } deriving (Generic, Eq, Show)
 
-data NewConnection = NewConnection { ip :: Addr
-                                   , realIp :: Addr
-                                   , port :: Int } deriving (Generic, Show)
+instance A.FromJSON Connection
+instance A.ToJSON Connection
 
-instance FromJSON NewConnection
-instance ToJSON NewConnection
+data Request = New Connection | BadRequest deriving (Eq, Show)
+data Response = ListeningOn Connection deriving (Show)
+
+instance A.FromJSON Request where
+  parseJSON (A.Object o) = case HM.lookup "request" o of
+    Just (A.String "new") -> case HM.lookup "endpoint" o of
+      Just (A.Object _) -> New <$> o .: "endpoint"
+      _ -> pure BadRequest
+    _ -> pure BadRequest
