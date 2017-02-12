@@ -8,8 +8,9 @@ module Manager
 , environment
 , withEnvironment
 , CommandQueue
-, ManagerCommand(..)
 , Command(..)
+, add
+, remove
 , getCommand
 , postCommand
 , newCommandQueue ) where
@@ -23,6 +24,9 @@ import Control.Concurrent.STM.TQueue ( TQueue, newTQueueIO
 import Routing.RoutingTable ( RoutingTable )
 import Control.Concurrent.TreeThreads
 
+import Core (Addr)
+import Network (Socket)
+
 
 -- |Environment contains all the data that the Manager threads need
 -- to be able to access.
@@ -32,19 +36,17 @@ data Environment = Environment { routingTable :: RoutingTable
 -- |Managers form a tree of threads which act on the Environment
 type Manager = TreeThread Environment
 
--- |We would like to be able to pass commands to a central manager
--- which spawns sub-Managers to alter the environment. In order to keep
--- this abstract and extensible, a command is just something we can
--- interpret inside a manager. ManagerCommand is a typeclass which encodes
--- this.
-class ManagerCommand c where
-  command :: c -> Manager ()
-
 -- A command is either a call to exit, or something which has an
 -- interpretation in terms of a Manager.
-data Command = Quit | forall c . ManagerCommand c => Command c 
+data Command = Quit | Add Addr Socket | Remove Addr
 
-  
+add :: Addr -> Socket -> Manager ()
+add = undefined
+
+remove :: Addr -> Manager ()
+remove = undefined
+
+
 -- |makeManaged takes a RoutingTable, and creates a fresh
 -- environment with which it can be managed.
 makeManaged :: RoutingTable -> IO Environment
@@ -52,7 +54,7 @@ makeManaged table = do
   commands <- newCommandQueue
   return $ Environment table commands
 
- 
+
 -- |Reduce a Manager () to an IO ()
 manage :: Manager () -> Environment -> IO ()
 manage = sproutOn
@@ -60,7 +62,6 @@ manage = sproutOn
 
 --spawn :: Manager () -> Manager Branch
 spawn = sprout
-
 
 -- |CommandQueue is an abstraction of the programs internal list of
 -- pending commands.
