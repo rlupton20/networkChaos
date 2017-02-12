@@ -5,7 +5,7 @@ module Relay.Relay
 import Control.Monad (forever)
 import Control.Concurrent.Async (race_)
 
-import Types  
+import Core
 import Relay.Connection
 
 -- |makeRelay takes a connection, a Queue on which to put inbound
@@ -27,4 +27,4 @@ makeRelay connection injector outbound = do
     inFrom injector connection = forever $ do
       bs <- receiveOn connection
       bs `passTo` injector
-                    
+

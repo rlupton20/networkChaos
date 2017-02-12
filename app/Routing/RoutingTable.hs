@@ -11,4 +11,4 @@ module Routing.RoutingTable
 
 -- This is an interface file for Routing.RoutingTable.Internal
 import Routing.RoutingTable.Internal
-import Types (Injector)
+import Core (Injector)

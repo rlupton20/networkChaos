@@ -8,9 +8,9 @@ import Test.HUnit ((@=?), (~:))
 
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TQueue
-       
+
 import Routing.RoutingTable.Internal
-import Types
+import Core
 
 routingTableTest :: TF.Test
 routingTableTest = TF.testGroup "RoutingTable.hs unit tests:" $ hUnitTestToTests routingTableUnitTests
@@ -60,14 +60,14 @@ delRouteNoRoute = "newRoute:delRouteFor: Check delRoute removes a route" ~: test
   where
     test = do
       rt <- makeTestRT
-      
+
       -- First add a route and check its there
       let label = addrW8 10 0 0 1
           item = addrW8 192 168 3 1
       newRoute rt label (item, duffQueue)
       lookup <- label `getDirectionWith` rt
       Just item @=? fmap fst lookup
-      
+
       -- Then delete the route and check its not
       rt `delRouteFor` label
       lookup <- label `getDirectionWith` rt
@@ -78,13 +78,13 @@ newRouteOverwrites = "newRoute: check newRoute overwrites an entry in a RoutingT
   where
     test = do
       rt <- makeTestRT
-      
+
       -- First add a route and check its there
       let label = addrW8 10 0 0 1
           item = addrW8 192 168 3 1
       newRoute rt label (item, duffQueue)
       lookup <- label `getDirectionWith` rt
-      Just item @=? fmap fst lookup      
+      Just item @=? fmap fst lookup
 
       -- Then add a new location with the same
       -- label, and check it overwrites the old

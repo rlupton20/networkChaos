@@ -9,7 +9,7 @@ import Test.HUnit ((@=?), (~:))
 import Test.QuickCheck
 import Data.Word
 
-import Types
+import Core
 
 type Label = String
 type Input = String

@@ -19,8 +19,7 @@ import Manager
 import Command
 import Command.Control (controller)
 
-import Types
-import Utils
+import Core
 
 -- Only needed when setting up router
 import Debug.PacketParsing.IP4 (parseIP4)
@@ -38,7 +37,7 @@ main = do
     Right cfg -> do
       let dev = device $ net cfg
       withTUN dev $ \tun -> runStack (core tun cfg)
-  
+
 
 -- |core is a specification of the critical spine of the program.
 -- The core threads are specified here, and run using runStack

@@ -24,8 +24,7 @@ executable vanguard
                      , Config
                      , Config.Internal
                      , Control.Concurrent.Stack
-                     , Types
-                     , Utils
+                     , Core
                      , Command
                      , Command.Control
                      , Network.TunTap
@@ -67,9 +66,8 @@ test-suite vanguard-test
   type:			exitcode-stdio-1.0
   hs-source-dirs:	test, app
   main-is:		Spec.hs
-  other-modules:        Utils
-                      , TypesTest
-                      , Types
+  other-modules:        TypesTest
+                      , Core
                       , Routing.RoutingTableTest
                       , Routing.RoutingTable
                       , Routing.RoutingTable.Internal

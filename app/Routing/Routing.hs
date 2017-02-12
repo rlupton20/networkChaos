@@ -3,8 +3,8 @@ module Routing.Routing
 ( makeRouter ) where
 
 import qualified Data.ByteString as B
-  
-import Types
+
+import Core
 import Routing.RoutingTable
 
 -- |Takes an Injector (PacketQueue), and creates a new
@@ -30,7 +30,7 @@ routeWith bs rt = do
     lookup bs = do
       let dest = getDest bs
       dest `getOutChannelFrom` rt
-      
+
     getDest :: Packet -> Addr
     getDest bs = let a = bs `B.index` 16
                      b = bs `B.index` 17
