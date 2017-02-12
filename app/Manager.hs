@@ -23,6 +23,7 @@ import Control.Concurrent.STM.TQueue ( TQueue, newTQueueIO
 
 import Routing.RoutingTable ( RoutingTable )
 import Control.Concurrent.TreeThreads
+import Control.Monad.IO.Class (liftIO)
 
 import Core (Addr)
 import Network (Socket)
@@ -41,10 +42,10 @@ type Manager = TreeThread Environment
 data Command = Quit | Add Addr Socket | Remove Addr
 
 add :: Addr -> Socket -> Manager ()
-add = undefined
+add _ _ = liftIO $ putStrLn "add"
 
 remove :: Addr -> Manager ()
-remove = undefined
+remove _ = liftIO $ putStrLn "remove"
 
 
 -- |makeManaged takes a RoutingTable, and creates a fresh

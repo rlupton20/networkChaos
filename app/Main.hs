@@ -17,7 +17,7 @@ import Relay.Relay
 import Manager
 
 import Command (routeMaster)
-import Command.Control (controller)
+import Command.Control (controller, actingOn)
 
 import Core
 
@@ -67,7 +67,7 @@ core tt config =
     -- Lastly we start the command line
     let cq = commandQueue env
     register $ withControlSocket controlSocket $ \sock ->
-      controller sock `manage` env
+      controller sock `actingOn` env
 
     where
 
