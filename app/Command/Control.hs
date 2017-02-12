@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Command.Control
 ( controller
 , actingOn ) where
@@ -10,10 +11,14 @@ import Network.Wai (Application, responseLBS)
 import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, setPort)
 import Network.HTTP.Types (status200)
 import Network.HTTP.Types.Header (hContentType)
+import Data.Aeson (FromJSON, ToJSON, encode)
+import GHC.Generics (Generic)
+
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
 
 import Manager (Environment(..), Command(..), postCommand)
+import Core
 
 type Controller a = ReaderT Environment IO a
 
@@ -35,4 +40,17 @@ control env _ respond = dispatch `actingOn` env
       env <- ask
       liftIO $ do
         postCommand (commandQueue env) (Add undefined undefined)
-        respond $ responseLBS status200 [(hContentType, "text/plain")] "Unix socket on vanguard"
+        respond $ responseLBS status200 [(hContentType, "text/plain")] js
+
+    (Just a) = addr "0.0.0.0"
+    (Just b) = addr "1.1.1.1"
+
+    js = encode $ NewConnection a b 10
+
+
+data NewConnection = NewConnection { ip :: Addr
+                                   , realIp :: Addr
+                                   , port :: Int } deriving (Generic, Show)
+
+instance FromJSON NewConnection
+instance ToJSON NewConnection

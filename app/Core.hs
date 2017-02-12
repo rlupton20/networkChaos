@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, DeriveGeneric #-}
 module Core
 ( Addr
 , addrW8
@@ -31,11 +31,16 @@ import Network.Socket ( Family(AF_UNIX, AF_INET)
                       , iNADDR_ANY, aNY_PORT
                       , Socket, defaultProtocol, socket, bind, close )
 import System.Posix.Files ( removeLink )
+import Data.Aeson (ToJSON, FromJSON)
+import GHC.Generics (Generic)
 
 -- |Addr is a type for holding IP addresses. It is the same as the
 -- type from network-house (note, the Show and Read instances are
 -- different).
-data Addr = Addr {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 deriving (Eq, Ord, Show, Read)
+data Addr = Addr {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 {-# UNPACK #-} !Word8 deriving (Eq, Ord, Show, Read, Generic)
+
+instance FromJSON Addr
+instance ToJSON Addr
 
 -- |addrW8 takes four Word8s and uses them to build an Addr
 -- e.g. addrW8 1 2 3 4 is the address 1.2.3.4
