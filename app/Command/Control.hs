@@ -46,29 +46,38 @@ control env request respond = dispatch `actingOn` env
         raw <- lazyRequestBody request
         let (Just cmd) = A.decode raw :: Maybe Request
         js <- case cmd of
-
-                New endpoint -> withProtectedBoundUDPSocket $ \sock -> do
-                  ip <- getAddr (routingTable env)
-                  Just (vip, p) <- describeSocket sock
-                  uid <- hashUnique <$> newUnique
-                  let c = Connection ip vip (fromIntegral p)
-                  addPending (pending env) uid $ PC endpoint c sock
-                  return . Right $ ListeningOn uid c
-
-                Connect uid -> do
-                  lu <- retrievePending (pending env) uid
-                  case lu of
-                    (Just (PC r l s)) -> do
-                      let message = Add (virtualip r) (ip r, fromIntegral $ port r) s
-                      postCommand (commandQueue env) message
-                      return . Right $ OK
-                    Nothing -> return $ Left 404
-
+                New endpoint -> new endpoint `actingOn` env
+                Connect uid -> connect uid `actingOn` env
                 BadRequest -> return $ Left 404
-                  
         case js of
           (Right json) -> respondJSON status200 (A.encode json)
           (Left 404) -> respondJSON status404 ""
 
     respondJSON status message =
       respond $ responseLBS status [(hContentType, "application/json")] message
+
+new :: Connection -> Controller (Either Int Response)
+new endpoint = do
+  env <- ask
+  liftIO $ withProtectedBoundUDPSocket $ \sock -> do
+    ip <- getAddr (routingTable env)
+    Just (vip, p) <- describeSocket sock
+    uid <- hashUnique <$> newUnique
+    let c = Connection ip vip (fromIntegral p)
+    addPending (pending env) uid $ PC endpoint c sock
+    return . Right $ ListeningOn uid c
+
+connect :: Int -> Controller (Either Int Response)
+connect uid = do
+  env <- ask
+  liftIO $ do
+    lu <- retrievePending (pending env) uid
+    case lu of
+      (Just (PC r l s)) -> do
+        let message = Add (virtualip r) (ip r, fromIntegral $ port r) s
+        postCommand (commandQueue env) message
+        return . Right $ OK
+      Nothing -> return $ Left 404
+
+
+
