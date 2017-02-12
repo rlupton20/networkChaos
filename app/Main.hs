@@ -16,7 +16,7 @@ import Relay.Relay
 
 import Manager
 
-import Command
+import Command (routeMaster)
 import Command.Control (controller)
 
 import Core
@@ -66,9 +66,8 @@ core tt config =
 
     -- Lastly we start the command line
     let cq = commandQueue env
-        post = postCommand cq
     register $ withControlSocket controlSocket $ \sock ->
-      controller sock post
+      controller sock `manage` env
 
     where
 
@@ -95,4 +94,4 @@ core tt config =
         specManager :: RoutingTable -> Stack (IO (), Environment)
         specManager table = liftIO $ do
             env <- makeManaged table
-            return (commander `manage` env, env)
+            return (routeMaster `manage` env, env)
