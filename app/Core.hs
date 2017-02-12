@@ -14,8 +14,9 @@ module Core
 , readM
 , withUnixSocket
 , withControlSocket
-, withUDPSocket
-, withBoundUDPSocket) where
+, withProtectedUDPSocket
+, withProtectedBoundUDPSocket
+, describeSocket ) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TQueue (TQueue, newTQueueIO
@@ -24,12 +25,14 @@ import qualified Data.ByteString as B
 import Data.Word (Word8)
 
 import Text.Read (readMaybe)
-import Control.Exception ( bracket, bracket_ )
+import Control.Exception ( bracket, bracket_, bracketOnError )
 import Network.Socket ( Family(AF_UNIX, AF_INET)
                       , SocketType(Stream, Datagram)
                       , SockAddr(SockAddrUnix, SockAddrInet)
+                      , Socket, PortNumber
                       , iNADDR_ANY, aNY_PORT
-                      , Socket, defaultProtocol, socket, bind, close )
+                      , defaultProtocol, socket, bind, close
+                      , getSocketName, hostAddressToTuple )
 import System.Posix.Files ( removeLink )
 import Data.Aeson (ToJSON, FromJSON)
 import GHC.Generics (Generic)
@@ -109,15 +112,23 @@ withControlSocket path action = withUnixSocket $ \sock ->
              (action sock)
 
 -- |withUDPSocket opens a new UDP socket, with the promise that it will be
--- closed in the event of an exception, or when the passed action is finished.
-withUDPSocket :: (Socket -> IO a) -> IO a
-withUDPSocket = bracket
+-- closed in the event of an exception during the execution of the passed
+-- action. One the socket leaves the execution of the action, it is no longer
+-- guaranteed to be closed.
+withProtectedUDPSocket :: (Socket -> IO a) -> IO a
+withProtectedUDPSocket = bracketOnError
   (socket AF_INET Datagram defaultProtocol)
   close
 
 -- |withBoundUDPSocket opens a new UDP socket and binds it to an address
-withBoundUDPSocket :: (Socket -> IO a) -> IO a
-withBoundUDPSocket action = withUDPSocket $ \sock ->
-  bracket_ (bind sock $ SockAddrInet aNY_PORT iNADDR_ANY)
-           (close sock)
-           (action sock)
+withProtectedBoundUDPSocket :: (Socket -> IO a) -> IO a
+withProtectedBoundUDPSocket action = withProtectedUDPSocket $ \sock ->
+  bracketOnError (bind sock $ SockAddrInet aNY_PORT iNADDR_ANY)
+                 (const $ close sock)
+                 (const $ action sock)
+
+describeSocket :: Socket -> IO (Maybe (Addr, PortNumber))
+describeSocket sock = do
+  (SockAddrInet p ha) <- getSocketName sock
+  let (a, b, c, d) = hostAddressToTuple ha
+  return $ Just (Addr a b c d, p)

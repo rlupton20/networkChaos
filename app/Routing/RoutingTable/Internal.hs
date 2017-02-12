@@ -55,6 +55,10 @@ newRoutingTable injector = do
 setAddr :: RoutingTable -> Addr -> IO ()
 setAddr RT{..} ad = atomically $ writeTVar ip ad
 
+-- |getAddr gets the IP address we are using on the network
+getAddr :: RoutingTable -> IO Addr
+getAddr RT{..} = atomically $ readTVar ip
+
 -- |newRoute adds a new route to the routing table. An endpoint is described
 -- by a 2-tuple consisting of an address, and a TQueue of Packets.
 newRoute :: RoutingTable -> Addr -> (Addr, TQueue Packet) -> IO ()

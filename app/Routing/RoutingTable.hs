@@ -3,6 +3,7 @@ module Routing.RoutingTable
 , RoutingTable
 , Injector
 , newRoutingTable
+, getAddr
 , setAddr
 , getDirectionWith
 , getOutChannelFrom

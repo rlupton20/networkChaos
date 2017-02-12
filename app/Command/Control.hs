@@ -7,7 +7,7 @@ module Command.Control where
 import Data.ByteString ( ByteString )
 import Network.Socket (Socket, listen)
 
-import Network.Wai (Application, responseLBS)
+import Network.Wai (Application, responseLBS, lazyRequestBody)
 import Network.Wai.Handler.Warp (runSettingsSocket, defaultSettings, setPort)
 import Network.HTTP.Types (status200)
 import Network.HTTP.Types.Header (hContentType)
@@ -22,7 +22,10 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
 
 import Manager (Environment(..), Command(..), postCommand)
+import Routing.RoutingTable (getAddr)
 import Core
+
+import Network.Socket (close) --temp
 
 type Controller a = ReaderT Environment IO a
 
@@ -38,18 +41,21 @@ controller sock = do
     runSettingsSocket settings sock (control env)
 
 control :: Environment -> Application
-control env _ respond = dispatch `actingOn` env
+control env request respond = dispatch `actingOn` env
   where
     dispatch = do
       env <- ask
       liftIO $ do
+        (Just cmd) <- A.decode <$> lazyRequestBody request
+        js <- case cmd of
+                New endpoint -> withProtectedBoundUDPSocket $ \sock -> do
+                  ip <- getAddr (routingTable env)
+                  Just (vip, p) <- describeSocket sock
+                  let json = A.encode $ Connection ip vip (fromIntegral p)
+                  close sock
+                  return json 
         postCommand (commandQueue env) (Add undefined undefined)
-        respond $ responseLBS status200 [(hContentType, "text/plain")] js
-
-    (Just a) = addr "0.0.0.0"
-    (Just b) = addr "1.1.1.1"
-
-    js = A.encode $ Connection a b 10
+        respond $ responseLBS status200 [(hContentType, "text/plain")] ""
 
 data Connection = Connection { virtualip :: Addr
                              , ip :: Addr
