@@ -44,17 +44,20 @@ control env request respond = dispatch `actingOn` env
       env <- ask
       liftIO $ do
         raw <- lazyRequestBody request
-        let (Just cmd) = A.decode raw :: Maybe Request
-        js <- case cmd of
-                New endpoint -> new endpoint `actingOn` env
-                Connect uid -> connect uid `actingOn` env
-                BadRequest -> return $ Left 404
+        js <- maybe (return $ Left 406) action $ (A.decode raw :: Maybe Request)
         case js of
           (Right json) -> respondJSON status200 (A.encode json)
           (Left 404) -> respondJSON status404 ""
 
+    action :: Request -> IO (Either Int Response)
+    action cmd = case cmd of
+      New endpoint -> new endpoint `actingOn` env
+      Connect uid -> connect uid `actingOn` env
+      BadRequest -> return $ Left 404
+
     respondJSON status message =
       respond $ responseLBS status [(hContentType, "application/json")] message
+
 
 new :: Connection -> Controller (Either Int Response)
 new endpoint = do
