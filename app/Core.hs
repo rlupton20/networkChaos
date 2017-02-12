@@ -4,6 +4,7 @@ module Core
 , addrW8
 , renderAddr
 , addr
+, buildAddress
 , Queue
 , Packet
 , PacketQueue
@@ -32,7 +33,7 @@ import Network.Socket ( Family(AF_UNIX, AF_INET)
                       , Socket, PortNumber
                       , iNADDR_ANY, aNY_PORT
                       , defaultProtocol, socket, bind, close
-                      , getSocketName, hostAddressToTuple )
+                      , getSocketName, hostAddressToTuple, tupleToHostAddress )
 import System.Posix.Files ( removeLink )
 import Data.Aeson (ToJSON, FromJSON)
 import GHC.Generics (Generic)
@@ -68,6 +69,12 @@ addr str = do
   return ad
 
 -- Internally threads have queues of packets which we must process.
+-- Utility function for resolving addresses
+buildAddress :: Addr -> PortNumber -> SockAddr
+buildAddress addr port = let Addr a b c d = addr
+                             ad = tupleToHostAddress (a,b,c,d) in
+                             SockAddrInet port ad
+
 -- Here we abstract away the underlying types and provide interface
 -- functions for creating, reading and writing to these queues.
 

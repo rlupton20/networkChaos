@@ -40,27 +40,18 @@ add l e@(r,p) s = do
 
 makeRelay :: Socket -> Injector -> PacketQueue -> (Addr, PortNumber) -> IO ()
 makeRelay s inj q (a,p) = do
-  dest <- resolveAddress (show a) p
+  let dest = buildAddress a p 
   race_ (dispatch q dest) (inject s)
   where
     dispatch q dest = forever $ do
       bs <- readQueue q
+      putStrLn "dispatching!"
       sendTo s bs dest
 
     inject s = forever $ do
       bs <- recv s 4096
       bs `passTo` inj 
       
-      
-      
 
 remove :: Addr -> Manager ()
 remove _ = liftIO $ putStrLn "remove"
-
-
--- Utility function for resolving addresses
-resolveAddress :: String -> PortNumber -> IO SockAddr
-resolveAddress addr port = do
-  addrInfo <- getAddrInfo Nothing (Just addr) (Just $ show port)
-  let ads = map addrAddress addrInfo
-  return $ head ads
