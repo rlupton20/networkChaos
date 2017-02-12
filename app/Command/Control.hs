@@ -59,7 +59,8 @@ control env request respond = dispatch `actingOn` env
                   lu <- retrievePending (pending env) uid
                   case lu of
                     (Just (PC r l s)) -> do
-                      postCommand (commandQueue env) (Add (virtualip r) s)
+                      let message = Add (virtualip r) (ip r, fromIntegral $ port r) s
+                      postCommand (commandQueue env) message
                       return . Right $ OK
                     Nothing -> return $ Left 404
 

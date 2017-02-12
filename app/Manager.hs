@@ -9,8 +9,6 @@ module Manager
 , withEnvironment
 , CommandQueue
 , Command(..)
-, add
-, remove
 , getCommand
 , postCommand
 , newCommandQueue ) where
@@ -27,7 +25,7 @@ import Control.Monad.IO.Class (liftIO)
 
 import Command.Types (Pending, newPending)
 import Core (Addr)
-import Network (Socket)
+import Network (Socket, PortNumber)
 
 
 -- |Environment contains all the data that the Manager threads need
@@ -41,14 +39,7 @@ type Manager = TreeThread Environment
 
 -- A command is either a call to exit, or something which has an
 -- interpretation in terms of a Manager.
-data Command = Quit | Add Addr Socket | Remove Addr
-
-add :: Addr -> Socket -> Manager ()
-add _ _ = liftIO $ putStrLn "add"
-
-remove :: Addr -> Manager ()
-remove _ = liftIO $ putStrLn "remove"
-
+data Command = Quit | Add Addr (Addr, PortNumber) Socket | Remove Addr
 
 -- |makeManaged takes a RoutingTable, and creates a fresh
 -- environment with which it can be managed.
