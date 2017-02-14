@@ -40,16 +40,14 @@ controller sock = do
 control :: Environment -> Application
 control env request respond = dispatch `actingOn` env
   where
-    dispatch = do
-      env <- ask
-      liftIO $ do
-        raw <- lazyRequestBody request
-        js <- maybe (return $ Left 406) action $ (A.decode raw :: Maybe Request)
-        case js of
-          (Right json) -> respondJSON status200 (A.encode json)
-          (Left 404) -> respondJSON notFound404 ""
-          (Left 406) -> respondJSON notAcceptable406 ""
-          (Left _) -> respondJSON notAcceptable406 ""
+    dispatch = liftIO $ do
+      raw <- lazyRequestBody request
+      js <- maybe (return $ Left 406) action $ (A.decode raw :: Maybe Request)
+      case js of
+        (Right json) -> respondJSON status200 (A.encode json)
+        (Left 404) -> respondJSON notFound404 ""
+        (Left 406) -> respondJSON notAcceptable406 ""
+        (Left _) -> respondJSON notAcceptable406 ""
 
     action :: Request -> IO (Either Int Response)
     action cmd = case cmd of
