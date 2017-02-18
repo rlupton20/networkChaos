@@ -68,7 +68,7 @@ develop (Connection l r p) = do
   env <- ask
   liftIO $ do
     cv <- newCommVar
-    let message = Direct l (r,fromIntegral p) cv
+    let message = Direct l (r,p) cv
     message `passTo` (commandQueue env)
     c <- takeCommVar cv
     return . Right $ ConnectingWith c
@@ -97,5 +97,5 @@ new = do
     message `passTo` cq
     (a, p) <- takeCommVar cv
     vip <- getAddr rt
-    let c = Connection vip a (fromIntegral p)
+    let c = Connection vip a p
     return . Right $ ListeningOn uid c

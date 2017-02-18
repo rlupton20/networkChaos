@@ -3,6 +3,7 @@
 module Command.Types where
 
 import qualified Data.Aeson as A
+import Data.Aeson.Types (Parser)
 import Data.Aeson ((.:), (.=))
 import qualified Data.HashMap.Lazy as HM
 import qualified Data.Map as M
@@ -11,12 +12,19 @@ import Network.Socket (Socket, PortNumber)
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TVar ( TVar, newTVarIO
                                    , modifyTVar', readTVar, writeTVar)
-import Control.Concurrent.STM.TMVar ( TMVar, newEmptyTMVarIO )
 import Control.Exception (bracketOnError)
 
 import Core
 
 -- |Provide some FromJSON and ToJSON instances for Connection types
+-- First we need instances for PortNumbers
+instance A.FromJSON PortNumber where
+  parseJSON jn@(A.Number n) = fromIntegral <$> (A.parseJSON jn :: Parser Int)
+  parseJSON _ = mempty
+
+instance A.ToJSON PortNumber where
+  toJSON n = A.toJSON (fromIntegral n :: Int)
+
 instance A.FromJSON Connection
 instance A.ToJSON Connection
 

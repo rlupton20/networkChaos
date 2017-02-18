@@ -34,8 +34,8 @@ direct l (r,p) cv = do
   liftIO $ withProtectedBoundUDPSocket $ \sock -> do
     q <- newQueue
     withRoute (routingTable env) (l #-> (r,q)) $ do
-      putCommVar cv $ Connection l r (fromIntegral p)
-      makeRelay sock (getInjector . routingTable $ env) q (r, fromIntegral p)
+      putCommVar cv $ Connection l r p
+      makeRelay sock (getInjector . routingTable $ env) q (r,p)
 
 
 makeRelay :: Socket -> Injector -> PacketQueue -> (Addr, PortNumber) -> IO ()
@@ -62,7 +62,7 @@ new uid cv = do
       takeCommVar pc
     q <- newQueue
     withRoute (routingTable env) (v #-> (a,q)) $
-      makeRelay sock (getInjector . routingTable $ env) q (a, fromIntegral p)
+      makeRelay sock (getInjector . routingTable $ env) q (a,p)
 
 remove :: Addr -> Manager ()
 remove _ = liftIO $ putStrLn "remove"

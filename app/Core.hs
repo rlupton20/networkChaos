@@ -87,7 +87,7 @@ buildAddress addr port = let Addr a b c d = addr
 -- information we need to provide about ourselves.
 data Connection = Connection { virtual_ip :: Addr
                              , external_ip :: Addr
-                             , port :: Int } deriving (Generic, Eq, Show)
+                             , port :: PortNumber } deriving (Generic, Eq, Show)
 
 
 -- QUEUES :: thread safe polymorphic queues (abstraction layer)
