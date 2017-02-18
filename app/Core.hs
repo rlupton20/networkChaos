@@ -13,6 +13,10 @@ module Core
 , passTo
 , newQueue
 , readQueue
+, CommVar
+, newCommVar
+, putCommVar
+, takeCommVar
 , readM
 , withUnixSocket
 , withControlSocket
@@ -23,6 +27,7 @@ module Core
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TQueue (TQueue, newTQueueIO
                                      , readTQueue, writeTQueue)
+import Control.Concurrent.STM.TMVar ( TMVar, newEmptyTMVarIO, putTMVar, takeTMVar )
 import qualified Data.ByteString as B
 import Data.Word (Word8)
 
@@ -76,6 +81,7 @@ buildAddress addr port = let Addr a b c d = addr
                              ad = tupleToHostAddress (a,b,c,d) in
                              SockAddrInet port ad
 
+
 -- |A connection represents all the information we need to store
 -- about a single endpoint we are connecting to. This is also the
 -- information we need to provide about ourselves.
@@ -83,8 +89,8 @@ data Connection = Connection { virtual_ip :: Addr
                              , external_ip :: Addr
                              , port :: Int } deriving (Generic, Eq, Show)
 
--- Here we abstract away the underlying types and provide interface
--- functions for creating, reading and writing to these queues.
+
+-- QUEUES :: thread safe polymorphic queues (abstraction layer)
 
 newtype Queue a = Queue (TQueue a)
 type Packet = B.ByteString
@@ -99,6 +105,22 @@ newQueue = fmap Queue newTQueueIO
 
 readQueue :: Queue a -> IO a
 readQueue (Queue q) = atomically . readTQueue $ q
+
+-- CommVar :: Blocking threadsafe variables for passing variables
+-- between two threads. Use TVars or similar if there is no
+-- consistent access order to avoid deadlock etc.
+
+newtype CommVar a = CommVar (TMVar a)
+
+newCommVar :: IO (CommVar a)
+newCommVar = fmap CommVar newEmptyTMVarIO
+
+putCommVar :: CommVar a -> a -> IO ()
+putCommVar (CommVar v) x = atomically $ putTMVar v x
+
+takeCommVar :: CommVar a -> IO a
+takeCommVar (CommVar v) = atomically $ takeTMVar v
+
 
 
 readM :: (Read a, Monad m) => String -> m a

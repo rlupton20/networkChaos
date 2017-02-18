@@ -16,6 +16,7 @@ import Control.Exception (bracketOnError)
 
 import Core
 
+-- |Provide some FromJSON and ToJSON instances for Connection types
 instance A.FromJSON Connection
 instance A.ToJSON Connection
 
@@ -56,9 +57,8 @@ instance A.ToJSON Response where
 
 -- |A partial connection represents a conncection which has been
 -- started, but for which the details have yet to be finalized.
-data PartialConnection = PC { connection :: TMVar Connection }
+data PartialConnection = PC { connection :: CommVar Connection }
                             
-
 -- |PartialConnections will be stored in a Map with a unique
 -- identifier.
 type PendingM = HM.HashMap Int PartialConnection
@@ -71,13 +71,13 @@ newPending :: IO Pending
 newPending = fmap Pending . newTVarIO $ HM.empty
 
 -- | Add an entry to a collection of Pendings.
-addBlankPending :: Pending -> Int -> IO (TMVar Connection)
+addBlankPending :: Pending -> Int -> IO (CommVar Connection)
 addBlankPending (Pending p) uid = do
-  c <- newEmptyTMVarIO
+  c <- newCommVar
   atomically $ modifyTVar' p (HM.insert uid (PC c))
   return c
 
-errorBracketedPending :: Pending -> Int -> (TMVar Connection -> IO a) -> IO a
+errorBracketedPending :: Pending -> Int -> (CommVar Connection -> IO a) -> IO a
 errorBracketedPending pen@(Pending p) uid action =
   bracketOnError (addBlankPending pen uid)
                  (\_ -> atomically $ HM.delete uid <$> readTVar p)

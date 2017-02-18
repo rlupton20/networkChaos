@@ -17,8 +17,6 @@ import Control.Applicative ((<$>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask, asks)
 import Data.Unique (Unique, newUnique, hashUnique)
-import Control.Concurrent.STM (atomically)
-import Control.Concurrent.STM.TMVar (newEmptyTMVarIO, takeTMVar, putTMVar)
 
 import Manager (Environment(..), Command(..))
 import Routing.RoutingTable (getAddr)
@@ -26,10 +24,12 @@ import Core
 
 import Command.Types
 
+
 type Controller a = ReaderT Environment IO a
 
 actingOn :: Controller a -> Environment -> IO a
 actingOn = runReaderT
+
 
 controller :: Socket -> Controller ()
 controller sock = do
@@ -38,6 +38,7 @@ controller sock = do
     listen sock 5
     let settings = setPort 3000 defaultSettings
     runSettingsSocket settings sock (control env)
+
 
 control :: Environment -> Application
 control env request respond = dispatch `actingOn` env
@@ -66,10 +67,10 @@ develop :: Connection -> Controller (Either Int Response)
 develop (Connection l r p) = do
   env <- ask
   liftIO $ do
-    pb <- newEmptyTMVarIO
-    let message = Direct l (r,fromIntegral p) pb
+    cv <- newCommVar
+    let message = Direct l (r,fromIntegral p) cv
     message `passTo` (commandQueue env)
-    c <- atomically $ takeTMVar pb
+    c <- takeCommVar cv
     return . Right $ ConnectingWith c
 
 
@@ -79,10 +80,11 @@ connect uid r = do
   liftIO $ do
     wc <- retrievePending (pending env) uid
     case wc of
-      Just (PC tc) -> do
-        atomically $ putTMVar tc r
+      Just (PC pc) -> do
+        putCommVar pc r
         return . Right $ OK
       Nothing -> return . Left $ 404
+
 
 new :: Controller (Either Int Response)
 new = do
@@ -90,11 +92,10 @@ new = do
   rt <- asks routingTable
   liftIO $ do
     uid <- hashUnique <$> newUnique
-    cb <- newEmptyTMVarIO
-    let message = Create uid cb
+    cv <- newCommVar
+    let message = Create uid cv
     message `passTo` cq
-    (a, p) <- atomically $ takeTMVar cb
+    (a, p) <- takeCommVar cv
     vip <- getAddr rt
     let c = Connection vip a (fromIntegral p)
     return . Right $ ListeningOn uid c
-
