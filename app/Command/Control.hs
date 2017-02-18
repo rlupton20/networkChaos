@@ -20,7 +20,7 @@ import Data.Unique (Unique, newUnique, hashUnique)
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TMVar (newEmptyTMVarIO, takeTMVar, putTMVar)
 
-import Manager (Environment(..), Command(..), postCommand)
+import Manager (Environment(..), Command(..))
 import Routing.RoutingTable (getAddr)
 import Core
 
@@ -68,7 +68,7 @@ develop (Connection l r p) = do
   liftIO $ do
     pb <- newEmptyTMVarIO
     let message = Direct l (r,fromIntegral p) pb
-    postCommand (commandQueue env) message
+    message `passTo` (commandQueue env)
     c <- atomically $ takeTMVar pb
     return . Right $ ConnectingWith c
 
@@ -92,7 +92,7 @@ new = do
     uid <- hashUnique <$> newUnique
     cb <- newEmptyTMVarIO
     let message = Create uid cb
-    postCommand cq message
+    message `passTo` cq
     (a, p) <- atomically $ takeTMVar cb
     vip <- getAddr rt
     let c = Connection vip a (fromIntegral p)

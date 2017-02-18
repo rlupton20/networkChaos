@@ -8,10 +8,7 @@ module Manager
 , environment
 , withEnvironment
 , CommandQueue
-, Command(..)
-, getCommand
-, postCommand
-, newCommandQueue ) where
+, Command(..) ) where
 
 
 import Control.Concurrent.STM (atomically)
@@ -48,7 +45,7 @@ data Command = Quit
 -- environment with which it can be managed.
 makeManaged :: RoutingTable -> IO Environment
 makeManaged table = do
-  commands <- newCommandQueue
+  commands <- newQueue
   pen <- newPending
   return $ Environment table commands pen
 
@@ -63,18 +60,4 @@ spawn = sprout
 
 -- |CommandQueue is an abstraction of the programs internal list of
 -- pending commands.
-data CommandQueue = CommandQueue (TQueue Command)
-
--- |getCommand is a utility wrapper for fetching the next command
-getCommand :: CommandQueue -> IO Command
-getCommand cq = let (CommandQueue q) = cq in atomically $ readTQueue q
-
--- |postCommand is a utility wrapper for posting a command
-postCommand :: CommandQueue -> Command -> IO ()
-postCommand cq c = let (CommandQueue q) = cq in atomically $ writeTQueue q c
-
--- |newCommandQueue provides us with a new CommandQueue
-newCommandQueue :: IO CommandQueue
-newCommandQueue = do
-  q <- newTQueueIO
-  return (CommandQueue q)
+type CommandQueue = Queue Command

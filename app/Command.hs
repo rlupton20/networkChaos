@@ -23,7 +23,7 @@ import Core
 routeMaster :: Manager ()
 routeMaster = do
   cq <- withEnvironment commandQueue
-  next <- liftIO $ getCommand cq
+  next <- liftIO $ readQueue cq
   case next of
     Quit -> return ()
     (Create uid cb) -> spawn (new uid cb) >> routeMaster
