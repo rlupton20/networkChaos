@@ -35,8 +35,8 @@ testCanParseDevelopConnection = "Develop: Can parse develop connection command" 
   where
     test = let json = "{ \"request\" : \"develop\", " `append`
                         "\"endpoint\" : {" `append`
-                          "\"virtualip\" : [1,2,211,56]," `append`
-                          "\"ip\": [44,33,22,11]," `append`
+                          "\"virtual_ip\" : [1,2,211,56]," `append`
+                          "\"external_ip\": [44,33,22,11]," `append`
                           "\"port\": 678 }}"
                (Just vip) = addr "1.2.211.56"
                (Just ip) = addr "44.33.22.11"
@@ -58,8 +58,8 @@ testCanParseConnectMessage = "Connect: Can parse connect message" ~: test
   where
     test = let json = "{\"request\" : \"connect\", \"uid\" : 234," `append`
                        "\"endpoint\" : {" `append`
-                          "\"virtualip\" : [11,22,33,44]," `append`
-                          "\"ip\": [255,127,63,31]," `append`
+                          "\"virtual_ip\" : [11,22,33,44]," `append`
+                          "\"external_ip\": [255,127,63,31]," `append`
                           "\"port\": 58000 }}"
                (Just vip) = addr "11.22.33.44"
                (Just ip) = addr "255.127.63.31"

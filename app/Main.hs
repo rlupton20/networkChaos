@@ -12,7 +12,7 @@ import Control.Concurrent.Stack
 
 import Routing.Routing
 import Routing.RoutingTable
-import Relay.Relay
+--import Relay.Relay
 
 import Manager
 

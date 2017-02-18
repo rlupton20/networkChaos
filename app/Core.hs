@@ -5,6 +5,7 @@ module Core
 , renderAddr
 , addr
 , buildAddress
+, Connection(..)
 , Queue
 , Packet
 , PacketQueue
@@ -75,22 +76,29 @@ buildAddress addr port = let Addr a b c d = addr
                              ad = tupleToHostAddress (a,b,c,d) in
                              SockAddrInet port ad
 
+-- |A connection represents all the information we need to store
+-- about a single endpoint we are connecting to. This is also the
+-- information we need to provide about ourselves.
+data Connection = Connection { virtual_ip :: Addr
+                             , external_ip :: Addr
+                             , port :: Int } deriving (Generic, Eq, Show)
+
 -- Here we abstract away the underlying types and provide interface
 -- functions for creating, reading and writing to these queues.
 
-type Queue a = TQueue a
+newtype Queue a = Queue (TQueue a)
 type Packet = B.ByteString
 type PacketQueue = Queue Packet
 type Injector = PacketQueue
 
 passTo :: a -> Queue a -> IO ()
-passTo x q = atomically $ writeTQueue q x
+passTo x (Queue q) = atomically $ writeTQueue q x
 
 newQueue :: IO (Queue a)
-newQueue = newTQueueIO
+newQueue = fmap Queue newTQueueIO
 
 readQueue :: Queue a -> IO a
-readQueue = atomically . readTQueue
+readQueue (Queue q) = atomically . readTQueue $ q
 
 
 readM :: (Read a, Monad m) => String -> m a
@@ -100,6 +108,9 @@ readM str = do
     Nothing -> fail $ "Could not read string: " ++ str
     Just parse -> return parse
 
+
+-- BRACKETED SOCKET FUNCTIONS :: Allows us to create sockets and bindings
+-- that are cleared up in the event of an exception
 
 -- |withUnixSocket opens a new (streaming) unix socket, with the promise
 -- that it will be closed in the event of an exception, or when the passed

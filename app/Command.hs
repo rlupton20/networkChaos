@@ -13,7 +13,7 @@ import Control.Concurrent.STM.TMVar (TMVar, putTMVar, takeTMVar)
 
 import Routing.RoutingTable (withRoute, (#->), getInjector)
 
-import Command.Types (Connection(..), errorBracketedPending)
+import Command.Types (errorBracketedPending)
 
 import Manager
 import Core

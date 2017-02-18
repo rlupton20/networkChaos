@@ -3,7 +3,6 @@ module Routing.RoutingTable.Internal where
 
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
-import Control.Concurrent.STM.TQueue
 import Control.Exception (bracket_)
 
 import qualified Data.Map as M
@@ -60,8 +59,8 @@ getAddr :: RoutingTable -> IO Addr
 getAddr RT{..} = atomically $ readTVar ip
 
 -- |newRoute adds a new route to the routing table. An endpoint is described
--- by a 2-tuple consisting of an address, and a TQueue of Packets.
-newRoute :: RoutingTable -> Addr -> (Addr, TQueue Packet) -> IO ()
+-- by a 2-tuple consisting of an address, and a Queue of Packets.
+newRoute :: RoutingTable -> Addr -> (Addr, PacketQueue) -> IO ()
 newRoute RT{..} ad entry = atomically $ modifyTVar' table (M.insert ad entry)
 
 -- |delRouteFor deletes a route associated with an address.

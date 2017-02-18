@@ -22,11 +22,11 @@ import Control.Concurrent.STM.TQueue ( TQueue, newTQueueIO
 import Routing.RoutingTable ( RoutingTable, getAddr )
 import Control.Concurrent.TreeThreads
 import Control.Monad.IO.Class (liftIO)
-
-import Command.Types (Connection(..), Pending, newPending)
-import Core (Addr, describeSocket)
 import Network (Socket, PortNumber)
 
+import Command.Types (Pending, newPending)
+
+import Core
 
 -- |Environment contains all the data that the Manager threads need
 -- to be able to access.

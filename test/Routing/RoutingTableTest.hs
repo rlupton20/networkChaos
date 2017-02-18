@@ -6,9 +6,6 @@ import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit as HU
 import Test.HUnit ((@=?), (~:))
 
-import Control.Concurrent.STM
-import Control.Concurrent.STM.TQueue
-
 import Routing.RoutingTable.Internal
 import Core
 
@@ -27,7 +24,7 @@ duffInjector :: Injector
 duffInjector = undefined
 
 -- The same is true of our work queue
-duffQueue :: TQueue Packet
+duffQueue :: PacketQueue
 duffQueue = undefined
 
 makeTestRT :: IO RoutingTable

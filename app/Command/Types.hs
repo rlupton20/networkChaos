@@ -16,13 +16,6 @@ import Control.Exception (bracketOnError)
 
 import Core
 
--- |A connection represents all the information we need to store
--- about a single endpoint we are connecting to. This is also the
--- information we need to provide about ourselves.
-data Connection = Connection { virtualip :: Addr
-                             , ip :: Addr
-                             , port :: Int } deriving (Generic, Eq, Show)
-
 instance A.FromJSON Connection
 instance A.ToJSON Connection
 
