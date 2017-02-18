@@ -9,7 +9,7 @@ import Control.Exception (bracket_)
 import Control.Monad (forever)
 import Control.Concurrent.Async (race_)
 
-import Routing.RoutingTable (withRoute, (#->), getInjector)
+import Routing.RoutingTable (withRoute, (#->), getInjector, getAddr)
 
 import Command.Types (errorBracketedPending)
 
@@ -25,16 +25,18 @@ routeMaster = do
   case next of
     Quit -> return ()
     (Create uid cv) -> spawn (new uid cv) >> routeMaster
-    (Direct l r cv) -> spawn (direct l r cv) >> routeMaster
+    (Direct c cv) -> spawn (direct c cv) >> routeMaster
     (Remove a) -> spawn (remove a) >> routeMaster
 
-direct :: Addr -> (Addr, PortNumber) -> CommVar Connection -> Manager ()
-direct l (r,p) cv = do
+
+direct :: Connection -> CommVar Connection -> Manager ()
+direct (Connection l r p) cv = do
   env <- environment
   liftIO $ withProtectedBoundUDPSocket $ \sock -> do
     q <- newQueue
+    c <- describeConnection env sock
     withRoute (routingTable env) (l #-> (r,q)) $ do
-      putCommVar cv $ Connection l r p
+      putCommVar cv c
       makeRelay sock (getInjector . routingTable $ env) q (r,p)
 
 
@@ -51,18 +53,27 @@ makeRelay s inj q (a,p) = do
       bs <- recv s 4096
       bs `passTo` inj
 
-new :: Int -> CommVar (Addr, PortNumber) -> Manager ()
+
+new :: Int -> CommVar Connection -> Manager ()
 new uid cv = do
   env <- environment
   let p = pending env
   liftIO $ withProtectedBoundUDPSocket $ \sock -> do
     (Connection v a p) <- errorBracketedPending p uid $ \pc -> do
-      c <- describeSocket sock
+      c <- describeConnection env sock
       putCommVar cv c
       takeCommVar pc
     q <- newQueue
     withRoute (routingTable env) (v #-> (a,q)) $
       makeRelay sock (getInjector . routingTable $ env) q (a,p)
 
+
 remove :: Addr -> Manager ()
 remove _ = liftIO $ putStrLn "remove"
+
+
+describeConnection :: Environment -> Socket -> IO Connection
+describeConnection env s  = do
+  l <- getAddr (routingTable env)
+  (a, p) <- describeSocket s
+  return $ Connection l a p

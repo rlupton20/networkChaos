@@ -37,9 +37,10 @@ type Manager = TreeThread Environment
 -- A command is either a call to exit, or something which has an
 -- interpretation in terms of a Manager.
 data Command = Quit
-             | Create Int (CommVar (Addr, PortNumber))
-             | Direct Addr (Addr, PortNumber) (CommVar Connection)
+             | Create Int (CommVar Connection)
+             | Direct Connection (CommVar Connection)
              | Remove Addr
+
 
 -- |makeManaged takes a RoutingTable, and creates a fresh
 -- environment with which it can be managed.

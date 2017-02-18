@@ -12,14 +12,13 @@ import Network.HTTP.Types (status200, notFound404, notAcceptable406)
 import Network.HTTP.Types.Header (hContentType)
 
 import qualified Data.Aeson as A
-import Control.Applicative ((<$>))
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask, asks)
 import Data.Unique (Unique, newUnique, hashUnique)
 
 import Manager (Environment(..), Command(..))
-import Routing.RoutingTable (getAddr)
+
 import Core
 
 import Command.Types
@@ -64,11 +63,11 @@ control env request respond = dispatch `actingOn` env
 
 
 develop :: Connection -> Controller (Either Int Response)
-develop (Connection l r p) = do
+develop connection = do
   env <- ask
   liftIO $ do
     cv <- newCommVar
-    let message = Direct l (r,p) cv
+    let message = Direct connection cv
     message `passTo` (commandQueue env)
     c <- takeCommVar cv
     return . Right $ ConnectingWith c
@@ -89,13 +88,10 @@ connect uid r = do
 new :: Controller (Either Int Response)
 new = do
   cq <- asks commandQueue
-  rt <- asks routingTable
   liftIO $ do
-    uid <- hashUnique <$> newUnique
+    uid <- fmap hashUnique newUnique
     cv <- newCommVar
     let message = Create uid cv
     message `passTo` cq
-    (a, p) <- takeCommVar cv
-    vip <- getAddr rt
-    let c = Connection vip a p
+    c <- takeCommVar cv
     return . Right $ ListeningOn uid c
