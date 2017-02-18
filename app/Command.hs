@@ -5,7 +5,6 @@ import Control.Monad.IO.Class (liftIO)
 import Network.Socket ( Socket, PortNumber, SockAddr
                       , AddrInfo(..), getAddrInfo, close)
 import Network.Socket.ByteString (sendTo, recv)
-import Control.Exception (bracket_)
 import Control.Monad (forever)
 import Control.Concurrent.Async (race_)
 

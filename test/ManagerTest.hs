@@ -15,10 +15,6 @@ import Control.Exception (try, getMaskingState, MaskingState(..))
 
 import Manager
 
---import Control.Concurrent.TreeThreads.Manager
---import Control.Concurrent.TreeThreads.Manage
---import Control.Concurrent.TreeThreads.Types
-
 import Routing.RoutingTable
 
 managerTest :: TF.Test
@@ -34,40 +30,6 @@ manageTest = "manage: launches a manager and returns" ~: test
       env <- makeManaged duffRoutingTable
       r <- (return ()) `manage` env
       () @=? r
-
---spawnTrackTest :: HU.Test
---spawnTrackTest = "spawn: check spawned submanager is tracked by the parent" ~: test
---  where
---    test = do
---      env <- makeManaged duffRoutingTable
---      manager `manage` env
---
---    manager :: Manager ()
---    manager = do
---      spawn $ liftIO (threadDelay 1000000)
---      sml <- submanagerLog
---      liftIO $ do
---        subs <- atomically $ readTVar sml
---        Just 1 @=? fmap length subs
---        return ()
---
---cullRemovalTest :: HU.Test
---cullRemovalTest = "manage: check culling thread removes finished submanager" ~: test
---  where
---    test = do
---      env <- makeManaged duffRoutingTable
---      manager `manage` env
---
---    manager :: Manager ()
---    manager = do
---      spawn $ return ()
---      sml <- submanagerLog
---      liftIO $ do
---        threadDelay 1000000
---        subs <- atomically $ readTVar sml
---        Just 0 @=? fmap length subs
---        return ()
-
 
 postSpawnMaskingState :: HU.Test
 postSpawnMaskingState = "spawn: check masking state is Unmasked after spawn" ~: test
