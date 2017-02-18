@@ -8,8 +8,12 @@ import Network.Socket.ByteString (sendTo, recv)
 import Control.Exception (bracket_)
 import Control.Monad (forever)
 import Control.Concurrent.Async (race_)
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TMVar (TMVar, putTMVar, takeTMVar)
 
 import Routing.RoutingTable (withRoute, (#->), getInjector)
+
+import Command.Types (Connection(..), errorBracketedPending)
 
 import Manager
 import Core
@@ -22,20 +26,18 @@ routeMaster = do
   next <- liftIO $ getCommand cq
   case next of
     Quit -> return ()
-    (Add l r s) -> spawn (add l r s) >> routeMaster
+    (Create uid cb) -> spawn (new uid cb) >> routeMaster
+    (Direct l r pb) -> spawn (direct l r pb) >> routeMaster
     (Remove a) -> spawn (remove a) >> routeMaster
 
-add :: Addr -> (Addr, PortNumber) -> Socket -> Manager ()
-add l e@(r,p) s = do
+direct :: Addr -> (Addr, PortNumber) -> TMVar Connection -> Manager ()
+direct l (r,p) pb = do
   env <- environment
-  liftIO $ covering s $ do
+  liftIO $ withProtectedBoundUDPSocket $ \sock -> do
     q <- newQueue
-    withRoute (routingTable env) (l #-> (r,q)) $
-      makeRelay s (getInjector . routingTable $ env) q e
-  where
-    covering s action = bracket_ (return ())
-      (close s)
-      action
+    withRoute (routingTable env) (l #-> (r,q)) $ do
+      atomically . putTMVar pb $ Connection l r (fromIntegral p)
+      makeRelay sock (getInjector . routingTable $ env) q (r, fromIntegral p)
 
 makeRelay :: Socket -> Injector -> PacketQueue -> (Addr, PortNumber) -> IO ()
 makeRelay s inj q (a,p) = do
@@ -50,6 +52,18 @@ makeRelay s inj q (a,p) = do
       bs <- recv s 4096
       bs `passTo` inj
 
+new :: Int -> TMVar (Addr, PortNumber) -> Manager ()
+new uid cb = do
+  env <- environment
+  let p = pending env
+  liftIO $ withProtectedBoundUDPSocket $ \sock -> do
+    (Connection v a p) <- errorBracketedPending p uid $ \tc -> do
+      c <- describeSocket sock
+      atomically $ putTMVar cb c
+      atomically $ takeTMVar tc
+    q <- newQueue
+    withRoute (routingTable env) (v #-> (a,q)) $
+      makeRelay sock (getInjector . routingTable $ env) q (a, fromIntegral p)
 
 remove :: Addr -> Manager ()
 remove _ = liftIO $ putStrLn "remove"

@@ -15,8 +15,10 @@ import qualified Data.Aeson as A
 import Control.Applicative ((<$>))
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
+import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask, asks)
 import Data.Unique (Unique, newUnique, hashUnique)
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TMVar (newEmptyTMVarIO, takeTMVar, putTMVar)
 
 import Manager (Environment(..), Command(..), postCommand)
 import Routing.RoutingTable (getAddr)
@@ -61,37 +63,38 @@ control env request respond = dispatch `actingOn` env
 
 
 develop :: Connection -> Controller (Either Int Response)
-develop endpoint = do
+develop (Connection l r p) = do
   env <- ask
-  liftIO $ withProtectedBoundUDPSocket $ \sock -> do
-    vip <- getAddr (routingTable env)
-    Just (gip, p) <- describeSocket sock
-    let c = Connection vip gip (fromIntegral p)
-        message = Add (virtualip endpoint) (ip endpoint, fromIntegral $ port endpoint) sock
+  liftIO $ do
+    pb <- newEmptyTMVarIO
+    let message = Direct l (r,fromIntegral p) pb
     postCommand (commandQueue env) message
-    return . Right $ ListeningOn 0 c
+    c <- atomically $ takeTMVar pb
+    return . Right $ ConnectingWith c
+
 
 connect :: Int -> Connection -> Controller (Either Int Response)
 connect uid r = do
   env <- ask
   liftIO $ do
-    lu <- retrievePending (pending env) uid
-    case lu of
-      (Just (PC l s)) -> do
-        let message = Add (virtualip r) (ip r, fromIntegral $ port r) s
-        postCommand (commandQueue env) message
+    wc <- retrievePending (pending env) uid
+    case wc of
+      Just (PC tc) -> do
+        atomically $ putTMVar tc r
         return . Right $ OK
-      Nothing -> return $ Left 404
+      Nothing -> return . Left $ 404
 
 new :: Controller (Either Int Response)
 new = do
-  env <- ask
-  liftIO $ withProtectedBoundUDPSocket $ \sock -> do
-    vip <- getAddr (routingTable env)
-    Just (gip, p) <- describeSocket sock
-    let c = Connection vip gip (fromIntegral p)
+  cq <- asks commandQueue
+  rt <- asks routingTable
+  liftIO $ do
     uid <- hashUnique <$> newUnique
-    addPending (pending env) uid $ PC c sock
+    cb <- newEmptyTMVarIO
+    let message = Create uid cb
+    postCommand cq message
+    (a, p) <- atomically $ takeTMVar cb
+    vip <- getAddr rt
+    let c = Connection vip a (fromIntegral p)
     return . Right $ ListeningOn uid c
-
 

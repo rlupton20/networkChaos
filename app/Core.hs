@@ -26,7 +26,7 @@ import qualified Data.ByteString as B
 import Data.Word (Word8)
 
 import Text.Read (readMaybe)
-import Control.Exception ( bracket, bracket_, bracketOnError )
+import Control.Exception ( bracket, bracket_)
 import Network.Socket ( Family(AF_UNIX, AF_INET)
                       , SocketType(Stream, Datagram)
                       , SockAddr(SockAddrUnix, SockAddrInet)
@@ -123,19 +123,19 @@ withControlSocket path action = withUnixSocket $ \sock ->
 -- action. One the socket leaves the execution of the action, it is no longer
 -- guaranteed to be closed.
 withProtectedUDPSocket :: (Socket -> IO a) -> IO a
-withProtectedUDPSocket = bracketOnError
+withProtectedUDPSocket = bracket
   (socket AF_INET Datagram defaultProtocol)
   close
 
 -- |withBoundUDPSocket opens a new UDP socket and binds it to an address
 withProtectedBoundUDPSocket :: (Socket -> IO a) -> IO a
 withProtectedBoundUDPSocket action = withProtectedUDPSocket $ \sock ->
-  bracketOnError (bind sock $ SockAddrInet aNY_PORT iNADDR_ANY)
-                 (const $ close sock)
-                 (const $ action sock)
+  bracket_ (bind sock $ SockAddrInet aNY_PORT iNADDR_ANY)
+                 (close sock)
+                 (action sock)
 
-describeSocket :: Socket -> IO (Maybe (Addr, PortNumber))
+describeSocket :: Socket -> IO (Addr, PortNumber)
 describeSocket sock = do
   (SockAddrInet p ha) <- getSocketName sock
   let (a, b, c, d) = hostAddressToTuple ha
-  return $ Just (Addr a b c d, p)
+  return $ (Addr a b c d, p)

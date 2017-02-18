@@ -7,10 +7,12 @@ import Data.Aeson ((.:), (.=))
 import qualified Data.HashMap.Lazy as HM
 import qualified Data.Map as M
 import GHC.Generics (Generic)
-import Network.Socket (Socket)
+import Network.Socket (Socket, PortNumber)
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TVar ( TVar, newTVarIO
                                    , modifyTVar', readTVar, writeTVar)
+import Control.Concurrent.STM.TMVar ( TMVar, newEmptyTMVarIO )
+import Control.Exception (bracketOnError)
 
 import Core
 
@@ -31,7 +33,9 @@ data Request = Develop Connection
              | BadRequest deriving (Eq, Show)
 
 -- |Responses we may send over the control socket
-data Response = ListeningOn Int Connection | OK deriving (Show)
+data Response = ListeningOn Int Connection
+              | ConnectingWith Connection
+              | OK deriving (Show)
 
 -- |JSON parser for Requests
 instance A.FromJSON Request where
@@ -52,13 +56,15 @@ instance A.ToJSON Response where
   toJSON (ListeningOn uid connection) = A.object $
     [ "listening" .= A.Number (fromIntegral uid)
     , "endpoint" .= A.toJSON connection ]
+  toJSON (ConnectingWith connection) = A.object $
+    [ "connecting" .= A.toJSON connection ]
   toJSON OK = A.String "OK"
 
 
 -- |A partial connection represents a conncection which has been
 -- started, but for which the details have yet to be finalized.
-data PartialConnection = PC { local :: Connection
-                            , sock :: Socket }
+data PartialConnection = PC { connection :: TMVar Connection }
+                            
 
 -- |PartialConnections will be stored in a Map with a unique
 -- identifier.
@@ -72,8 +78,17 @@ newPending :: IO Pending
 newPending = fmap Pending . newTVarIO $ HM.empty
 
 -- | Add an entry to a collection of Pendings.
-addPending :: Pending -> Int -> PartialConnection -> IO ()
-addPending (Pending p) uid pc  = atomically $ modifyTVar' p (HM.insert uid pc)
+addBlankPending :: Pending -> Int -> IO (TMVar Connection)
+addBlankPending (Pending p) uid = do
+  c <- newEmptyTMVarIO
+  atomically $ modifyTVar' p (HM.insert uid (PC c))
+  return c
+
+errorBracketedPending :: Pending -> Int -> (TMVar Connection -> IO a) -> IO a
+errorBracketedPending pen@(Pending p) uid action =
+  bracketOnError (addBlankPending pen uid)
+                 (\_ -> atomically $ HM.delete uid <$> readTVar p)
+                 action
 
 -- | Retrieve an entry from a Pending. This will delete it from the record.
 retrievePending :: Pending -> Int -> IO (Maybe PartialConnection)

@@ -19,12 +19,12 @@ import Control.Concurrent.STM.TMVar (TMVar)
 import Control.Concurrent.STM.TQueue ( TQueue, newTQueueIO
                                      , readTQueue, writeTQueue )
 
-import Routing.RoutingTable ( RoutingTable )
+import Routing.RoutingTable ( RoutingTable, getAddr )
 import Control.Concurrent.TreeThreads
 import Control.Monad.IO.Class (liftIO)
 
-import Command.Types (Pending, newPending)
-import Core (Addr)
+import Command.Types (Connection(..), Pending, newPending)
+import Core (Addr, describeSocket)
 import Network (Socket, PortNumber)
 
 
@@ -39,7 +39,10 @@ type Manager = TreeThread Environment
 
 -- A command is either a call to exit, or something which has an
 -- interpretation in terms of a Manager.
-data Command = Quit | Add Addr (Addr, PortNumber) Socket | Remove Addr
+data Command = Quit
+             | Create Int (TMVar (Addr, PortNumber))
+             | Direct Addr (Addr, PortNumber) (TMVar Connection)
+             | Remove Addr
 
 -- |makeManaged takes a RoutingTable, and creates a fresh
 -- environment with which it can be managed.
@@ -75,4 +78,3 @@ newCommandQueue :: IO CommandQueue
 newCommandQueue = do
   q <- newTQueueIO
   return (CommandQueue q)
-
