@@ -22,7 +22,9 @@ module Core
 , withControlSocket
 , withProtectedUDPSocket
 , withProtectedBoundUDPSocket
-, describeSocket ) where
+, describeSocket
+, decompose
+, resolveAddress ) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TQueue (TQueue, newTQueueIO
@@ -39,7 +41,8 @@ import Network.Socket ( Family(AF_UNIX, AF_INET)
                       , Socket, PortNumber
                       , iNADDR_ANY, aNY_PORT
                       , defaultProtocol, socket, bind, close
-                      , getSocketName, hostAddressToTuple, tupleToHostAddress )
+                      , getSocketName, hostAddressToTuple, tupleToHostAddress
+                      , getAddrInfo, AddrInfo(addrAddress) )
 import System.Posix.Files ( removeLink )
 import Data.Aeson (ToJSON, FromJSON)
 import GHC.Generics (Generic)
@@ -172,3 +175,18 @@ describeSocket sock = do
   (SockAddrInet p ha) <- getSocketName sock
   let (a, b, c, d) = hostAddressToTuple ha
   return $ (Addr a b c d, p)
+
+decompose :: SockAddr -> Maybe (Addr, PortNumber)
+decompose sa = case sa of
+  SockAddrInet p h -> let (a,b,c,d) = hostAddressToTuple h in
+    return (addrW8 a b c d, p)
+  _ -> Nothing
+
+resolveAddress :: String -> Maybe PortNumber -> IO (Maybe SockAddr)
+resolveAddress host service = do
+  results <- getAddrInfo Nothing (Just host) (fmap show service)
+  case results of
+    (x:_) -> case (addrAddress x) of
+      sa@(SockAddrInet _ _) -> return $ Just sa
+      _ -> return Nothing
+    _ -> return Nothing

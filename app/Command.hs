@@ -11,6 +11,7 @@ import Control.Concurrent.Async (race_)
 import Routing.RoutingTable (withRoute, (#->), getInjector, getAddr)
 
 import Command.Types (errorBracketedPending)
+import Command.STUN
 
 import Manager
 import Core
