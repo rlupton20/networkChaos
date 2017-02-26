@@ -11,6 +11,12 @@ packages:
   extra-dep: true
 # remove when fix appears
 
+# Pull vanguard-core
+- location:
+    git: https://github.com/rlupton20/vanguard-core
+    commit: 6969790ef72a12e915efbc8817c5a4c934504112
+  extra-dep: true   
+
 # Use our tree-threads library
 - location: 
     git: https://github.com/rlupton20/tree-threads/

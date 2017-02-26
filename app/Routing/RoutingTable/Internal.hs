@@ -7,7 +7,7 @@ import Control.Exception (bracket_)
 
 import qualified Data.Map as M
 
-import Core
+import Network.Vanguard.Core
 
 -- |Route is a datatype describing a routing entry.
 type Route = (Addr, (Addr, PacketQueue))

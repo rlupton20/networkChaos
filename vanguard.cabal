@@ -24,7 +24,6 @@ executable vanguard
                      , Config
                      , Config.Internal
                      , Control.Concurrent.Stack
-                     , Core
                      , Command
                      , Command.Control
                      , Network.TunTap
@@ -37,6 +36,7 @@ executable vanguard
                      , RankNTypes
                      , DeriveDataTypeable
   build-depends:       base
+                     , vanguard-core
                      , stm
                      , async
                      , mtl
@@ -68,13 +68,12 @@ test-suite vanguard-test
   type:			exitcode-stdio-1.0
   hs-source-dirs:	test, app
   main-is:		Spec.hs
-  other-modules:        TypesTest
-                      , Core
-                      , Routing.RoutingTableTest
+  other-modules:        Routing.RoutingTableTest
                       , Routing.RoutingTable
                       , Routing.RoutingTable.Internal
   other-extensions:   OverloadedStrings
   build-depends:	base
+                      , vanguard-core
                       , HUnit
                       , QuickCheck
                       , test-framework

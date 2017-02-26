@@ -12,4 +12,4 @@ module Routing.RoutingTable
 
 -- This is an interface file for Routing.RoutingTable.Internal
 import Routing.RoutingTable.Internal
-import Core (Injector)
+import Network.Vanguard.Core (Injector)

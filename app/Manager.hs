@@ -23,7 +23,7 @@ import Network (Socket, PortNumber)
 
 import Command.Types (Pending, newPending)
 
-import Core
+import Network.Vanguard.Core
 
 -- |Environment contains all the data that the Manager threads need
 -- to be able to access.

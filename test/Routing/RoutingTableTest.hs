@@ -7,7 +7,7 @@ import Test.HUnit as HU
 import Test.HUnit ((@=?), (~:))
 
 import Routing.RoutingTable.Internal
-import Core
+import Network.Vanguard.Core
 
 routingTableTest :: TF.Test
 routingTableTest = TF.testGroup "RoutingTable.hs unit tests:" $ hUnitTestToTests routingTableUnitTests

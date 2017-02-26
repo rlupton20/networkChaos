@@ -19,7 +19,7 @@ import Manager
 import Command (routeMaster)
 import Command.Control (controller, actingOn)
 
-import Core
+import Network.Vanguard.Core
 
 -- Only needed when setting up router
 import Debug.PacketParsing.IP4 (parseIP4)

@@ -19,7 +19,8 @@ import Data.Unique (Unique, newUnique, hashUnique)
 
 import Manager (Environment(..), Command(..))
 
-import Core
+import Network.Vanguard.Core
+import Network.Vanguard.Dataplane.API
 
 import Command.Types
 

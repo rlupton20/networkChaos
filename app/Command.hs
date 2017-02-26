@@ -14,7 +14,7 @@ import Command.Types (errorBracketedPending)
 import Command.STUN
 
 import Manager
-import Core
+import Network.Vanguard.Core
 
 -- |commander is a Manager process which takes commands and
 -- spawns submanagers to execute those commands.

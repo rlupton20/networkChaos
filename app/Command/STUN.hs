@@ -9,7 +9,7 @@ import Network.Stun.Internal
 import Data.Serialize
 import Control.Concurrent.Timeout (timeout)
 
-import Core
+import Network.Vanguard.Core
 
 
 -- List of stun servers

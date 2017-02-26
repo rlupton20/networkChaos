@@ -4,7 +4,7 @@ module Routing.Routing
 
 import qualified Data.ByteString as B
 
-import Core
+import Network.Vanguard.Core
 import Routing.RoutingTable
 
 -- |Takes an Injector (PacketQueue), and creates a new
