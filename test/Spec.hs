@@ -1,5 +1,4 @@
 import Test.Framework
-import Test.Framework.Providers.HUnit
 
 import Routing.RoutingTableTest (routingTableTest)
 import ManagerTest (managerTest)
