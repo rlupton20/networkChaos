@@ -26,7 +26,7 @@ packages:
 extra-deps:
 - stringprep-1.0.0 # Required by stunclient
 # - stunclient-0.1.0.1 # Commented out until fixed
-resolver: lts-8.2
+resolver: lts-7.19
 
 docker:
   enable: true
