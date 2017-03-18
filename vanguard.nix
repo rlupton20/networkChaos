@@ -5,7 +5,7 @@
 , stunclient, test-framework, test-framework-hunit
 , test-framework-quickcheck2, time, tls, transformers
 , unbounded-delays, unix, unix-bytestring, yaml, wai, warp
-, http-types, free, tree-threads, vanguard-core 
+, http-types, free, tree-threads, concurrent-stack, vanguard-core 
 , additionalTools ? []
 }:
 mkDerivation {
@@ -22,7 +22,7 @@ mkDerivation {
     async base bytestring cereal connection containers
     data-default-class http-client http-client-tls mtl network
     network-house stm stunclient tls transformers unbounded-delays unix
-    unix-bytestring yaml wai warp free tree-threads vanguard-core
+    unix-bytestring yaml wai warp free tree-threads concurrent-stack vanguard-core
   ];
   testHaskellDepends = [
     # System dependencies

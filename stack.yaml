@@ -23,6 +23,12 @@ packages:
     commit: 0380b68a661b73072293b6e19de298a0436d4ae6
   extra-dep: true   
 
+# Use our concurrent-stack library
+- location: 
+    git: https://github.com/rlupton20/concurrent-stack
+    commit: 952b282e1907ff06a39e3778404eab5b2228f58c
+  extra-dep: true   
+
 extra-deps:
 - stringprep-1.0.0 # Required by stunclient
 # - stunclient-0.1.0.1 # Commented out until fixed

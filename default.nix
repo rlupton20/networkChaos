@@ -16,9 +16,11 @@ let
                        else pkgs.haskell.packages.${compiler};
 
   treeThreads = haskellPackages.callPackage ./tree-threads.nix {};
+  concurrentStack = haskellPackages.callPackage ./concurrent-stack.nix {};
   vanguardCore = haskellPackages.callPackage ./vanguard-core.nix {};
   vanguard = haskellPackages.callPackage ./vanguard.nix { additionalTools = tools; 
                                                           tree-threads = treeThreads;
+                                                          concurrent-stack = concurrentStack;
                                                           vanguard-core = vanguardCore; };
 
 in

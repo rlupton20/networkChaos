@@ -23,7 +23,6 @@ executable vanguard
                      , Routing.RoutingTable.Internal
                      , Config
                      , Config.Internal
-                     , Control.Concurrent.Stack
                      , Command
                      , Command.Control
                      , Network.TunTap
@@ -54,6 +53,7 @@ executable vanguard
                      , aeson
                      , yaml
                      , tree-threads
+                     , concurrent-stack
                      , wai
                      , warp
                      , http-types
