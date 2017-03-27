@@ -3,6 +3,8 @@ let
 
   inherit (nixpkgs) pkgs ;
 
+  devel = import (builtins.fetchTarball https://github.com/rlupton20/alt-nixpkgs/archive/master.tar.gz) {};
+
   ghc = haskellPackages.ghcWithHoogle(packages: with packages; [
           cabal-install happy ghc-mod
           hindent hlint hasktags 
@@ -15,9 +17,10 @@ let
                        then pkgs.haskellPackages
                        else pkgs.haskell.packages.${compiler};
 
-  treeThreads = haskellPackages.callPackage ./tree-threads.nix {};
-  concurrentStack = haskellPackages.callPackage ./concurrent-stack.nix {};
-  vanguardCore = haskellPackages.callPackage ./vanguard-core.nix {};
+  treeThreads = devel.haskellLibraries.treeThreads;
+  concurrentStack = devel.haskellLibraries.concurrentStack;
+  vanguardCore = devel.vanguard.vanguardCore;
+
   vanguard = haskellPackages.callPackage ./vanguard.nix { additionalTools = tools; 
                                                           tree-threads = treeThreads;
                                                           concurrent-stack = concurrentStack;
